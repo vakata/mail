@@ -1,0 +1,40 @@
+{
+    "name": "vakata/mail",
+    "description": "A few simple mail sender classes",
+    "keywords": [
+        "vakata",
+        "mail"
+    ],
+    "homepage": "https://github.com/vakata/mail",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "vakata",
+            "email": "github@vakata.com",
+            "homepage": "http://www.vakata.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php" : ">=5.4.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit" : "4.*",
+        "codeclimate/php-test-reporter": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "vakata\\mail\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "vakata\\mail\\test\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "psr2": "php-cs-fixer fix ./src",
+        "phpdoc": "phpDocumentor -d ./src -t ./docs"
+    }
+}
