@@ -19,7 +19,22 @@ $ composer require vakata/mail
 ## Usage
 
 ``` php
+// build the message
+$mail = new \vakata\mail\Mail();
+$mail
+    ->setFrom('Name Family <mail@domain.tld>') // or simply an email
+    ->setSubject('Testmail') // unicode is fine too
+    ->setMessage('Check this pic out <img src="http://url.to/pic" />')
+    ->setTo(['first@recipient.tld', 'Second Person <second@recipient.tld>'])
+    ->setCc('mail@domain.tld')
+    ->setBcc('bcc@domain.tld');
 
+// send the message
+$sender = new \vakata\mail\driver\SMTPSender('ssl://user:pass@host:port');
+// PHP mail() is also supported:
+// $sender = new \vakata\mail\driver\MailSender();
+
+$sender->send($mail); // return an array of good and bad emails
 ```
 
 ## Testing
