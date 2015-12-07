@@ -2,12 +2,23 @@
 
 namespace vakata\mail\driver;
 
+use \vakata\mail\MailInterface;
+
 class MailSender implements SenderInterface
 {
-    public function send(array $to, array $cc, array $bcc, $from, $subject, $headers, $message)
+    public function send(MailInterface $mail)
     {
-        return @mail(implode(', ', $to), '=?utf-8?B?'.base64_encode((string) $subject).'?=', (string) $message, $headers) ?
-            ['good' => array_merge($to, $cc, $bcc), 'fail' => []] :
-            ['fail' => array_merge($to, $cc, $bcc), 'good' => []];
+        $all = array_merge(
+            $mail->getTo(true),
+            $mail->getCc(true),
+            $mail->getBcc(true)
+        );
+        list($headers, $message) = explode("\r\n\r\n", (string)$mail, 2);
+        return @mail(
+            implode(', ', $mail->getTo(true)),
+            '=?utf-8?B?'.base64_encode((string) $mail->getSubject()).'?=',
+            $message,
+            $headers
+        ) ? [ 'good' => $all, 'fail' => [] ] : [ 'fail' => $all, 'good' => [] ];
     }
 }

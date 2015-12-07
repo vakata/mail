@@ -2,8 +2,11 @@
 
 namespace vakata\mail;
 
-class Mail
+class Mail implements MailInterface
 {
+    protected $to = [];
+    protected $cc = [];
+    protected $bcc = [];
     protected $from = null;
     protected $html = true;
     protected $subject = null;
@@ -17,12 +20,20 @@ class Mail
 
     public function __construct($from = null, $subject = null, $message = null)
     {
-        $this->subject = $subject;
-        $this->message = $message;
-
         if ($from) {
             $this->setFrom($from);
         }
+        if ($subject) {
+            $this->setSubject($subject);
+        }
+        if ($message) {
+            $this->setMessage($message);
+        }
+        $this->setHeader('Date', date('r'));
+        $this->setHeader(
+            'Message-ID',
+            '<' . microtime(true) . '.' . ($this->from ? $this->from : '@local.dev') . '>'
+        );
     }
 
     protected function cleanHeaderName($name)
@@ -74,15 +85,92 @@ class Mail
         return;
     }
 
-    public function getFrom($mail)
+    public function getTo($mailOnly = false)
     {
-        return $this->message;
+        return $mailOnly ?
+            array_map(function ($v) { return $v['mail']; }, $this->to) :
+            $this->to;
+    }
+    public function setTo($mail)
+    {
+        if (!is_array($mail)) {
+            $mail = explode(',', $mail);
+        }
+        $this->to = [];
+        foreach ($mail as $m) {
+            $temp = $this->getAddress($m);
+            if ($temp) {
+                $this->to[] = [ 'mail' => $temp, 'string' => $this->getAddressString($m) ];
+            }
+        }
+        $this->removeHeader('To');
+        if (count($this->to)) {
+            $this->setHeader('To', implode(',', array_map(function ($v) { return $v['string']; }, $this->to)));
+        }
+
+        return $this;
+    }
+    public function getCc($mailOnly = false)
+    {
+        return $mailOnly ?
+            array_map(function ($v) { return $v['mail']; }, $this->cc) :
+            $this->cc;
+    }
+    public function setCc($mail)
+    {
+        if (!is_array($mail)) {
+            $mail = explode(',', $mail);
+        }
+        $this->cc = [];
+        foreach ($mail as $m) {
+            $temp = $this->getAddress($m);
+            if ($temp) {
+                $this->cc[] = [ 'mail' => $temp, 'string' => $this->getAddressString($m) ];
+            }
+        }
+        $this->removeHeader('CC');
+        if (count($this->cc)) {
+            $this->setHeader('CC', implode(',', array_map(function ($v) { return $v['string']; }, $this->cc)));
+        }
+
+        return $this;
+    }
+    public function getBcc($mailOnly = false)
+    {
+        return $mailOnly ?
+            array_map(function ($v) { return $v['mail']; }, $this->bcc) :
+            $this->bcc;
+    }
+    public function setBcc($mail)
+    {
+        if (!is_array($mail)) {
+            $mail = explode(',', $mail);
+        }
+        $this->bcc = [];
+        foreach ($mail as $m) {
+            $temp = $this->getAddress($m);
+            if ($temp) {
+                $this->bcc[] = [ 'mail' => $temp, 'string' => $this->getAddressString($m) ];
+            }
+        }
+        $this->removeHeader('BCC');
+        if (count($this->bcc)) {
+            $this->setHeader('BCC', implode(',', array_map(function ($v) { return $v['string']; }, $this->bcc)));
+        }
+
+        return $this;
+    }
+    public function getFrom($mailOnly = false)
+    {
+        return $mailOnly ? $this->getAddress($this->from) : $this->from;
     }
     public function setFrom($mail)
     {
-        $this->from = $this->getAddress($mail);
-        if ($this->from) {
-            $this->setHeader('From', $this->getAddressString($mail));
+        $this->from = null;
+        $temp = $this->getAddress($mail);
+        if ($temp) {
+            $this->from = $this->getAddressString($mail);
+            $this->setHeader('From', $this->from);
         }
 
         return $this;
@@ -94,7 +182,7 @@ class Mail
     public function setSubject($subject)
     {
         $this->subject = $subject;
-
+        $this->setHeader('Subject', '=?utf-8?B?'.base64_encode((string) $this->subject).'?=');
         return $this;
     }
     public function getMessage()
@@ -129,7 +217,9 @@ class Mail
     }
     public function getHeader($header)
     {
-        return isset($this->headers[$this->cleanHeaderName($header)]) ? $this->headers[$this->cleanHeaderName($header)] : null;
+        return isset($this->headers[$this->cleanHeaderName($header)]) ?
+            $this->headers[$this->cleanHeaderName($header)] :
+            null;
     }
     public function removeHeader($header)
     {
@@ -148,9 +238,12 @@ class Mail
     {
         return count($this->attached);
     }
-    public function addAttachment(\vakata\file\FileInterface $file, $name = null)
+    public function addAttachment(&$content, $name)
     {
-        $this->attached[] = [$file, $name];
+        if (!is_string($content) || !strlen($content)) {
+            throw new MailException('Invalid content');
+        }
+        $this->attached[] = [ $content, $name ];
 
         return $this;
     }
@@ -175,46 +268,8 @@ class Mail
         return $this;
     }
 
-    public function send($to, $cc = null, $bcc = null, \vakata\mail\send\SenderInterface $sender = null)
+    public function __toString()
     {
-        $t = [];
-        $c = [];
-        $b = [];
-
-        if (!is_array($to)) {
-            $to = explode(',', $to);
-        }
-        foreach ($to as $k => $m) {
-            $t[$k] = $this->getAddress($m);
-            $to[$k] = $this->getAddressString($m);
-        }
-        $t = array_filter($t);
-        $to = array_filter($to);
-
-        if (!is_array($cc)) {
-            $cc = explode(',', (string) $cc);
-        }
-        foreach ($cc as $k => $m) {
-            $c[$k] = $this->getAddress($m);
-            $cc[$k] = $this->getAddressString($m);
-        }
-        $c = array_filter($c);
-        $cc = array_filter($cc);
-
-        if (!is_array($bcc)) {
-            $bcc = explode(',', (string) $bcc);
-        }
-        foreach ($bcc as $k => $m) {
-            $b[$k] = $this->getAddress($m);
-            $bcc[$k] = $this->getAddressString($m);
-        }
-        $b = array_filter($b);
-        $bcc = array_filter($bcc);
-
-        if (!count($t) && !count($c) && !count($b)) {
-            throw new MailException('No valid mail to send to');
-        }
-
         $message = str_replace(array("\r\n", "\r"), "\n", (string) $this->message);
         $message = explode("\n", $message);
         $length = 76;
@@ -238,26 +293,33 @@ class Mail
             $result .= "\r\n";
         }
 
-        $result_bnd = '==Alternative_Boundary_x'.md5(microtime()).'x';
+        $resultBnd = '==Alternative_Boundary_x'.md5(microtime()).'x';
         if ($this->html) {
             $alternative = '';
-            $alternative .= '--'.$result_bnd."\r\n";
+            $alternative .= '--'.$resultBnd."\r\n";
             $alternative .= 'Content-Type: text/plain; charset="utf-8"'."\r\n";
             $alternative .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
             $alternative .= strip_tags($result)."\r\n\r\n";
-            $alternative .= '--'.$result_bnd."\r\n";
+            $alternative .= '--'.$resultBnd."\r\n";
             if (strpos($result, '<img ') !== false) {
-                $related_bnd = '==Related_Boundary_x'.md5(microtime()).'x';
-                $alternative .= 'Content-Type: multipart/related; '."\r\n\t".'boundary="'.$related_bnd.'"'."\r\n\r\n";
-                $alternative .= '--'.$related_bnd."\r\n";
+                $relatedBnd = '==Related_Boundary_x'.md5(microtime()).'x';
+                $alternative .= 'Content-Type: multipart/related; '."\r\n\t".'boundary="'.$relatedBnd.'"'."\r\n\r\n";
+                $alternative .= '--'.$relatedBnd."\r\n";
                 $alternative .= 'Content-Type: text/html; charset="utf-8"'."\r\n";
                 $alternative .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
-                $alternative .= preg_replace_callback(['(\<img(.*?)src\s*=\s*"([^"]+)")i', '(\<img(.*?)src\s*=\s*\'([^\']+)\')i', '(\<img(.*?)src=([^\'" ]+))i'], function ($matches) use (&$images) {
-                    $k = md5($matches[2]).'@local.dev';
-                    $images[$k] = $matches[2];
-
-                    return '<img '.$matches[1].' src="cid:'.$k.'" ';
-                }, $result);
+                $alternative .= preg_replace_callback(
+                    [
+                        '(\<img(.*?)src\s*=\s*"([^"]+)")i',
+                        '(\<img(.*?)src\s*=\s*\'([^\']+)\')i',
+                        '(\<img(.*?)src=([^\'" ]+))i'
+                    ],
+                    function ($matches) use (&$images) {
+                        $k = md5($matches[2]).'@local.dev';
+                        $images[$k] = $matches[2];
+                        return '<img '.$matches[1].' src="cid:'.$k.'" ';
+                    },
+                    $result
+                );
                 $alternative .= "\r\n\r\n";
                 foreach ($images as $k => $image) {
                     $content = file_get_contents($image);
@@ -269,19 +331,19 @@ class Mail
                     if (!$mime) {
                         continue;
                     }
-                    $alternative .= '--'.$related_bnd."\r\n";
+                    $alternative .= '--'.$relatedBnd."\r\n";
                     $alternative .= 'Content-Type: '.$mime.'; name="'.md5($k).'.'.$extn.'"'."\r\n";
                     $alternative .= 'Content-Transfer-Encoding: base64'."\r\n";
                     $alternative .= 'Content-ID: <'.$k.'>'."\r\n\r\n";
                     $alternative .= chunk_split(base64_encode($content))."\r\n\r\n";
                 }
-                $alternative .= '--'.$related_bnd.'--'."\r\n\r\n";
+                $alternative .= '--'.$relatedBnd.'--'."\r\n\r\n";
             } else {
                 $alternative .= 'Content-Type: text/html; charset="utf-8"'."\r\n";
                 $alternative .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
                 $alternative .= $result."\r\n\r\n";
             }
-            $alternative .= '--'.$result_bnd.'--';
+            $alternative .= '--'.$resultBnd.'--';
             $result = $alternative;
         }
 
@@ -293,22 +355,21 @@ class Mail
             $message = '';
             $message .= '--'.$bnd."\r\n";
             if ($this->html) {
-                $message .= 'Content-Type: multipart/alternative; '."\r\n\t".'boundary="'.$result_bnd.'"'."\r\n";
+                $message .= 'Content-Type: multipart/alternative; '."\r\n\t".'boundary="'.$resultBnd.'"'."\r\n";
             } else {
                 $message .= 'Content-Type: text/plain; charset="utf-8"'."\r\n";
             }
             $message .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
             $message .= $result."\r\n\r\n";
 
-            foreach ($this->attached as $file) {
-                $content = &$file[0]->content();
-                if (!$content) {
-                    continue;
-                }
+            foreach ($this->attached as &$file) {
+                $content = $file[0];
                 $size = strlen($content);
                 $content = chunk_split(base64_encode($content));
                 $message .= '--'.$bnd."\r\n";
-                $message .= 'Content-Type: application/octet-stream; name="'.'=?utf-8?B?'.base64_encode($file[1] ? $file[1] : $file[0]->name).'?='.'"'."\r\n";
+                $message .= 'Content-Type: application/octet-stream; name="';
+                $message .= '=?utf-8?B?'.base64_encode($file[1]).'?=';
+                $message .= '"'."\r\n";
                 $message .= 'Content-Disposition: attachment; size='.$size."\r\n";
                 $message .= 'Content-Transfer-Encoding: base64'."\r\n\r\n";
                 $message .= $content."\r\n\r\n";
@@ -317,7 +378,7 @@ class Mail
         } else {
             $this->setHeader('MIME-Version', '1.0;');
             if ($this->html) {
-                $this->setHeader('Content-Type', 'multipart/alternative; '."\r\n\t".'boundary="'.$result_bnd.'"');
+                $this->setHeader('Content-Type', 'multipart/alternative; '."\r\n\t".'boundary="'.$resultBnd.'"');
             } else {
                 $this->setHeader('Content-Type', 'text/plain; charset="utf-8"');
             }
@@ -333,18 +394,6 @@ class Mail
             }
             $headers[] = $k.': '.$v;
         }
-        $headers[] = 'Date: '.date('r');
-        if (count($to)) {
-            $headers[] = 'To: '.implode(', ', $to);
-        }
-        if (count($cc)) {
-            $headers[] = 'CC: '.implode(', ', $cc);
-        }
-        if (count($bcc)) {
-            $headers[] = 'BCC: '.implode(', ', $bcc);
-        }
-        $headers[] = 'Subject: =?utf-8?B?'.base64_encode((string) $this->subject).'?=';
-        $headers[] = 'Message-ID: <'.md5(implode('', $headers).$message.microtime()).($this->from ? '.'.$this->from : '@local.dev').'>';
         $headers = implode("\r\n", $headers);
 
         if ($this->crt) {
@@ -353,9 +402,23 @@ class Mail
             file_put_contents($file, ($content ? $content."\r\n\r\n" : '').$message);
             $rslt = false;
             if (!$this->ca) {
-                $rslt = openssl_pkcs7_sign($file, $sign, 'file://'.$this->crt, $this->pass ? array('file://'.$this->key, $this->pass) : 'file://'.$this->key, null);
+                $rslt = openssl_pkcs7_sign(
+                    $file,
+                    $sign,
+                    'file://'.$this->crt,
+                    $this->pass ? array('file://'.$this->key, $this->pass) : 'file://'.$this->key,
+                    null
+                );
             } else {
-                $rslt = openssl_pkcs7_sign($file, $sign, 'file://'.$this->crt, $this->pass ? array('file://'.$this->key, $this->pass) : 'file://'.$this->key, null, PKCS7_DETACHED, 'file://'.$this->ca);
+                $rslt = openssl_pkcs7_sign(
+                    $file,
+                    $sign,
+                    'file://'.$this->crt,
+                    $this->pass ? array('file://'.$this->key, $this->pass) : 'file://'.$this->key,
+                    null,
+                    PKCS7_DETACHED,
+                    'file://'.$this->ca
+                );
             }
             if (!$rslt) {
                 throw new \vakata\mail\MailException('Could not sign');
@@ -365,13 +428,8 @@ class Mail
             $headers .= "\r\n".str_replace("\n", "\r\n", $rslt[0]);
             $message = $rslt[1];
             @unlink($file);
-            @unlink($signed);
+            @unlink($sign);
         }
-
-        if ($sender === null) {
-            $sender = new \vakata\mail\send\MailSender();
-        }
-
-        return $sender->send($t, $c, $b, $this->from, $this->subject, $headers, $message);
+        return $headers . "\r\n\r\n" . $message;
     }
 }

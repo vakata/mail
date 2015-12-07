@@ -2,7 +2,9 @@
 
 namespace vakata\mail\driver;
 
+use \vakata\mail\MailInterface;
+
 interface SenderInterface
 {
-    public function send(array $to, array $cc, array $bcc, $from, $subject, $headers, $message);
+    public function send(MailInterface $message);
 }

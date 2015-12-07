@@ -2,19 +2,29 @@
 
 namespace vakata\mail\driver;
 
+use \vakata\mail\MailInterface;
+use \vakata\mail\MailException;
+
 class FileSender implements SenderInterface
 {
     public function __construct($dir)
     {
         $this->dir = realpath($dir);
         if (!$this->dir) {
-            throw new \vakata\mail\MailException('Invalid mail dump dir');
+            throw new MailException('Invalid mail dump dir');
         }
     }
-    public function send(array $to, array $cc, array $bcc, $from, $subject, $headers, $message)
+    public function send(MailInterface $mail)
     {
-        file_put_contents($this->dir.DIRECTORY_SEPARATOR.time().'_'.md5($headers.$message).'_'.rand(10, 99).'.txt', $headers."\r\n\r\n".$message);
-
-        return ['good' => array_merge($to, $cc, $bcc), 'fail' => []];
+        $data = (string)$mail;
+        file_put_contents($this->dir . DIRECTORY_SEPARATOR . time() . '_' . md5($data) . '.txt', $data);
+        return [
+            'good' => array_merge(
+                $mail->getTo(true),
+                $mail->getCc(true),
+                $mail->getBcc(true)
+            ),
+            'fail' => []
+        ];
     }
 }

@@ -3,6 +3,7 @@
 namespace vakata\mail\driver;
 
 use vakata\mail\MailException;
+use \vakata\mail\MailInterface;
 
 class SMTPSender implements SenderInterface
 {
@@ -268,10 +269,14 @@ class SMTPSender implements SenderInterface
         }
     }
 
-    public function send(array $to, array $cc, array $bcc, $from, $subject, $headers, $message)
+    public function send(MailInterface $mail)
     {
-        $this->comm('MAIL FROM:<'.$from.'>', [250]);
-        $recp = array_merge($to, $cc, $bcc);
+        $this->comm('MAIL FROM:<'.$mail->getFrom(true).'>', [250]);
+        $recp = array_merge(
+            $mail->getTo(true),
+            $mail->getCc(true),
+            $mail->getBcc(true)
+        );
         $badr = [];
         $good = [];
         foreach ($recp as $v) {
@@ -284,7 +289,7 @@ class SMTPSender implements SenderInterface
         }
         if (count($good)) {
             $this->comm('DATA', [354]);
-            $data = $headers."\r\n\r\n".$message;
+            $data = (string)$mail;
 
             $data = explode("\n", str_replace(array("\r\n", "\r"), "\n", $data));
             foreach ($data as $line) {
@@ -297,6 +302,6 @@ class SMTPSender implements SenderInterface
         $this->comm('.', [250]);
         $this->comm('RSET', [250]);
 
-        return ['good' => $good, 'fail' => $badr];
+        return [ 'good' => $good, 'fail' => $badr ];
     }
 }
