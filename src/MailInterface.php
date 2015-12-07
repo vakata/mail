@@ -26,7 +26,7 @@ interface MailInterface
     public function removeHeaders();
 
     public function hasAttachments();
-    public function addAttachment(&$content, $name);
+    public function addAttachment($content, $name);
     public function getAttachments();
     public function removeAttachments();
 

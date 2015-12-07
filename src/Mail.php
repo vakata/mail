@@ -238,12 +238,12 @@ class Mail implements MailInterface
     {
         return count($this->attached);
     }
-    public function addAttachment(&$content, $name)
+    public function addAttachment($content, $name)
     {
         if (!is_string($content) || !strlen($content)) {
             throw new MailException('Invalid content');
         }
-        $this->attached[] = [ $content, $name ];
+        $this->attached[] = [ &$content, $name ];
 
         return $this;
     }
@@ -302,6 +302,7 @@ class Mail implements MailInterface
             $alternative .= strip_tags($result)."\r\n\r\n";
             $alternative .= '--'.$resultBnd."\r\n";
             if (strpos($result, '<img ') !== false) {
+                $images = [];
                 $relatedBnd = '==Related_Boundary_x'.md5(microtime()).'x';
                 $alternative .= 'Content-Type: multipart/related; '."\r\n\t".'boundary="'.$relatedBnd.'"'."\r\n\r\n";
                 $alternative .= '--'.$relatedBnd."\r\n";

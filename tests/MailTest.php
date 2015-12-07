@@ -92,4 +92,23 @@ class StorageTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($mail->addAttachment($data2, 'file2.txt')->getAttachments(), [['asdf','file1.txt'], ['zxcv','file2.txt']]);
 		$this->assertEquals($mail->removeAttachments()->getAttachments(), []);
 	}
+	public function testString() {
+		$mail = new \vakata\mail\Mail();
+
+		$mail
+			->setFrom('test@test.com')
+			->setSubject('test')
+			->setMessage('test <img src="https://img.shields.io/packagist/v/vakata/mail.jpg" />', true)
+			->setHeader('Dummy', 'dummy')
+			->setTo('test@test.com')
+			->setCc('test@test.com')
+			->setBcc('test@test.com')
+			->addAttachment('asdf', 'file.txt');
+		$mail = (string)$mail;
+		list($headers, $body) = explode("\r\n\r\n", $mail, 2);
+
+
+		$this->assertEquals(substr_count($headers, 'dummy'), 1);
+		$this->assertEquals(substr_count($headers, 'test@test.com'), 4);
+	}
 }
