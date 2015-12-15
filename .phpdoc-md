@@ -1,0 +1,12 @@
+<?php
+return (object)[
+    'rootNamespace' => 'vakata\mail',
+    'destDirectory' => 'docs',
+    'format' => 'github',
+    'classes' => [
+        '\\vakata\\mail\\Mail',
+        '\\vakata\\mail\\driver\\FileSender',
+        '\\vakata\\mail\\driver\\MailSender',
+        '\\vakata\\mail\\driver\\SMTPSender'
+    ],
+];

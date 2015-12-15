@@ -37,6 +37,8 @@ $sender = new \vakata\mail\driver\SMTPSender('ssl://user:pass@host:port');
 $sender->send($mail); // return an array of good and bad emails
 ```
 
+Read more in the [API docs](docs/README.md)
+
 ## Testing
 
 ``` bash
