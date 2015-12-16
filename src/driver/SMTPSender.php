@@ -5,6 +5,9 @@ namespace vakata\mail\driver;
 use vakata\mail\MailException;
 use \vakata\mail\MailInterface;
 
+/**
+ * A mail sender class that sends message using an SMTP server.
+ */
 class SMTPSender implements SenderInterface
 {
     protected $connection = null;
@@ -61,6 +64,11 @@ class SMTPSender implements SenderInterface
         return $data;
     }
 
+    /**
+     * Create an instance.
+     * @method __construct
+     * @param  string      $connection the server connection string (for example `smtp://user:pass@server:port/`)
+     */
     public function __construct($connection)
     {
         $connection = parse_url($connection); // host, port, user, pass
@@ -158,7 +166,11 @@ class SMTPSender implements SenderInterface
         } catch (\Exception $ignore) {
         }
     }
-
+    /**
+     * A static method used to authenticate against a POP server (some SMTP servers require this)
+     * @method pop
+     * @param  string $connection the server connection string (for example `pop://user:pass@server:port/`)
+     */
     public static function pop($connection)
     {
         $connection = parse_url($connection); // host, port, user, pass
@@ -215,6 +227,11 @@ class SMTPSender implements SenderInterface
             throw $e;
         }
     }
+    /**
+     * A static method used to authenticate against an IMAP server (some SMTP servers require this)
+     * @method imap
+     * @param  string $connection the server connection string (for example `imap://user:pass@server:port/`)
+     */
     public static function imap($connection)
     {
         $connection = parse_url($connection); // host, port, user, pass
@@ -268,7 +285,12 @@ class SMTPSender implements SenderInterface
             throw $e;
         }
     }
-
+    /**
+     * Send a message.
+     * @method send
+     * @param  \vakata\mail\MailInterface $mail the message to be sent
+     * @return array              array with two keys - 'good' and 'bad' - indicating successfull and failed addresses
+     */
     public function send(MailInterface $mail)
     {
         $this->comm('MAIL FROM:<'.$mail->getFrom(true).'>', [250]);

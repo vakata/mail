@@ -2,6 +2,9 @@
 
 namespace vakata\mail;
 
+/**
+ * A class representing an e-mail message (headers, body, etc).
+ */
 class Mail implements MailInterface
 {
     protected $to = [];
@@ -18,6 +21,13 @@ class Mail implements MailInterface
     protected $pass = null;
     protected $ca = null;
 
+    /**
+     * Create an instance. Optionally supply initial values for from / subject and the email body.
+     * @method __construct
+     * @param  string      $from    the from field, can be either an email or First Last <email@addesss.com>
+     * @param  string      $subject the email subject
+     * @param  string      $message the message body
+     */
     public function __construct($from = null, $subject = null, $message = null)
     {
         if ($from) {
@@ -85,12 +95,24 @@ class Mail implements MailInterface
         return;
     }
 
+    /**
+     * Retrieve the recipients.
+     * @method getTo
+     * @param  boolean $mailOnly should only email addresses be included (instead of Name <address>), defaults to false
+     * @return array             array of to addresses
+     */
     public function getTo($mailOnly = false)
     {
         return $mailOnly ?
             array_map(function ($v) { return $v['mail']; }, $this->to) :
             $this->to;
     }
+    /**
+     * Set the recipients.
+     * @method setTo
+     * @param  string|array $mail the new recipients
+     * @return self
+     */
     public function setTo($mail)
     {
         if (!is_array($mail)) {
@@ -110,12 +132,24 @@ class Mail implements MailInterface
 
         return $this;
     }
+    /**
+     * Retrieve the carbon copy recipients.
+     * @method getCc
+     * @param  boolean $mailOnly should only email addresses be included (instead of Name <address>), defaults to false
+     * @return array             array of to addresses
+     */
     public function getCc($mailOnly = false)
     {
         return $mailOnly ?
             array_map(function ($v) { return $v['mail']; }, $this->cc) :
             $this->cc;
     }
+    /**
+     * Set the carbon copy recipients.
+     * @method setCc
+     * @param  string|array $mail the new recipients
+     * @return self
+     */
     public function setCc($mail)
     {
         if (!is_array($mail)) {
@@ -135,12 +169,24 @@ class Mail implements MailInterface
 
         return $this;
     }
+    /**
+     * Retrieve the blind carbon copy recipients.
+     * @method getBcc
+     * @param  boolean $mailOnly should only email addresses be included (instead of Name <address>), defaults to false
+     * @return array             array of to addresses
+     */
     public function getBcc($mailOnly = false)
     {
         return $mailOnly ?
             array_map(function ($v) { return $v['mail']; }, $this->bcc) :
             $this->bcc;
     }
+    /**
+     * Set the blind carbon copy recipients.
+     * @method setBcc
+     * @param  string|array $mail the new recipients
+     * @return self
+     */
     public function setBcc($mail)
     {
         if (!is_array($mail)) {
@@ -160,10 +206,22 @@ class Mail implements MailInterface
 
         return $this;
     }
+    /**
+     * Get the sender.
+     * @method getFrom
+     * @param  boolean $mailOnly should only an email address be included (instead of Name <address>), defaults to false
+     * @return string            the sender data
+     */
     public function getFrom($mailOnly = false)
     {
         return $mailOnly ? $this->getAddress($this->from) : $this->from;
     }
+    /**
+     * Set the sender.
+     * @method setFrom
+     * @param  string  $mail the new sender
+     * @return self
+     */
     public function setFrom($mail)
     {
         $this->from = null;
@@ -175,20 +233,41 @@ class Mail implements MailInterface
 
         return $this;
     }
+    /**
+     * Get the message subject.
+     * @method getSubject
+     * @return string     the message subject
+     */
     public function getSubject()
     {
         return $this->subject;
     }
+    /**
+     * Set the message subject (and also set the appropriate headers).
+     * @method setSubject
+     * @param  self
+     */
     public function setSubject($subject)
     {
         $this->subject = $subject;
         $this->setHeader('Subject', '=?utf-8?B?'.base64_encode((string) $this->subject).'?=');
         return $this;
     }
+    /**
+     * Get the message body.
+     * @method getMessage
+     * @return string     the message body
+     */
     public function getMessage()
     {
         return $this->message;
     }
+    /**
+     * Set the message body.
+     * @method setMessage
+     * @param  string     $message the new message body
+     * @param  boolean    $isHTML  is the body HTML formatted (or plain text), defaults to true.
+     */
     public function setMessage($message, $isHTML = true)
     {
         $this->message = $message;
@@ -196,48 +275,98 @@ class Mail implements MailInterface
 
         return $this;
     }
+    /**
+     * Is the message HTML formatted.
+     * @method isHTML
+     * @return boolean
+     */
     public function isHTML()
     {
         return $this->html;
     }
-
+    /**
+     * Retrieve all set headers.
+     * @method getHeaders
+     * @return array     all headers of the message
+     */
     public function getHeaders()
     {
         return $this->headers;
     }
+    /**
+     * Add a header to the message.
+     * @method setHeader
+     * @param  string    $header the header name
+     * @param  string    $value  the header value
+     * @return  self
+     */
     public function setHeader($header, $value)
     {
         $this->headers[$this->cleanHeaderName($header)] = $value;
 
         return $this;
     }
+    /**
+     * Is a specific header set on the message.
+     * @method hasHeader
+     * @param  string    $header the header name
+     * @return boolean
+     */
     public function hasHeader($header)
     {
         return isset($this->headers[$this->cleanHeaderName($header)]);
     }
+    /**
+     * Retieve a header value by name.
+     * @method getHeader
+     * @param  string    $header the header name
+     * @return string            the header value
+     */
     public function getHeader($header)
     {
         return isset($this->headers[$this->cleanHeaderName($header)]) ?
             $this->headers[$this->cleanHeaderName($header)] :
             null;
     }
+    /**
+     * Remove a header from the message by name.
+     * @method removeHeader
+     * @param  string       $header the header name
+     * @return self
+     */
     public function removeHeader($header)
     {
         unset($this->headers[$this->cleanHeaderName($header)]);
 
         return $this;
     }
+    /**
+     * Remove all headers from the message.
+     * @method removeHeaders
+     * @return self
+     */
     public function removeHeaders()
     {
         $this->headers = [];
 
         return $this;
     }
-
+    /**
+     * Does the message have attachments.
+     * @method hasAttachments
+     * @return int the attachments count
+     */
     public function hasAttachments()
     {
         return count($this->attached);
     }
+    /**
+     * Add an attachment to the message.
+     * @method addAttachment
+     * @param  string        $content the contents of the attachment
+     * @param  string        $name    the file name for the attachment
+     * @return  self
+     */
     public function addAttachment($content, $name)
     {
         if (!is_string($content) || !strlen($content)) {
@@ -247,17 +376,35 @@ class Mail implements MailInterface
 
         return $this;
     }
+    /**
+     * Retieve a list of all attachments.
+     * @method getAttachments
+     * @return array         all attached documents
+     */
     public function getAttachments()
     {
         return $this->attached;
     }
+    /**
+     * Remove all attachments.
+     * @method removeAttachments
+     * @return self
+     */
     public function removeAttachments()
     {
         $this->attached = [];
 
         return $this;
     }
-
+    /**
+     * Prepare the message for signing.
+     * @method sign
+     * @param  string $crt  path to the public key
+     * @param  string $key  path to the private key
+     * @param  string $pass the private key password (if necessary)
+     * @param  string $ca   the CA chain file
+     * @return self
+     */
     public function sign($crt, $key, $pass = null, $ca = null)
     {
         $this->crt = $crt ? realpath($crt) : null;
@@ -267,7 +414,11 @@ class Mail implements MailInterface
 
         return $this;
     }
-
+    /**
+     * Get the ready message as a string (headers and body)
+     * @method __toString
+     * @return string     the whole message
+     */
     public function __toString()
     {
         $message = str_replace(array("\r\n", "\r"), "\n", (string) $this->message);
