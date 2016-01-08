@@ -1,5 +1,5 @@
 <?php
-namespace vakata\kvstore\test;
+namespace vakata\mail\test;
 
 class StorageTest extends \PHPUnit_Framework_TestCase
 {
@@ -110,5 +110,13 @@ class StorageTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertEquals(substr_count($headers, 'dummy'), 1);
 		$this->assertEquals(substr_count($headers, 'test@test.com'), 4);
+
+		$from = \vakata\mail\Mail::fromString($mail);
+		$this->assertEquals('test@test.com', $from->getFrom(true));
+		$this->assertEquals('test', $from->getSubject());
+		$this->assertEquals(['test@test.com'], $from->getTo(true));
+		$this->assertEquals(['test@test.com'], $from->getCc(true));
+		$this->assertEquals(['test@test.com'], $from->getBcc(true));
+		$this->assertEquals(true, $from->hasAttachments());
 	}
 }

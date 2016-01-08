@@ -46,6 +46,129 @@ class Mail implements MailInterface
         );
     }
 
+    protected function parseParts($body)
+    {
+        $body = str_replace(["\r\n", "\n"], ["\n", "\r\n"], $body);
+        list($headers, $body) = explode("\r\n\r\n", $body, 2);
+        $headers = array_filter(explode("\r\n", preg_replace("(\r\n\s+)", " ", $headers)));
+        foreach ($headers as $k => $v) {
+            $v = explode(':', $v, 2);
+            $headers[$this->cleanHeaderName($v[0])] = trim($v[1]);
+            unset($headers[$k]);
+        }
+        if (!isset($headers['Content-Type']) || strpos($headers['Content-Type'], 'multipart') === false) {
+            if (isset($headers['Content-Transfer-Encoding'])) {
+                switch (strtolower($headers['Content-Transfer-Encoding'])) {
+                    case 'base64':
+                        $body = base64_decode($body);
+                        break;
+                    case 'quoted-printable':
+                        $body = quoted_printable_decode($body);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            $type = 'text/plain';
+            if (isset($headers['Content-Type'])) {
+                $type = explode(';', $headers['Content-Type'], 2)[0];
+            }
+            return [
+                'head' => $headers,
+                'type' => $type,
+                'body' => $body
+            ];
+        }
+
+        // multipart
+        $type = explode(';', explode('multipart/', $headers['Content-Type'], 2)[1], 2)[0];
+        $bndr = trim(explode(' boundary=', $headers['Content-Type'])[1],'"');
+        $parts = explode('--' . $bndr, $body);
+        array_pop($parts);
+        array_shift($parts);
+        $rslt = [
+            'head' => $headers,
+            'type' => $type,
+            'body' => []
+        ];
+        foreach ($parts as $part) {
+            $rslt['body'][] = $this->parseParts($part);
+        }
+        return $rslt;
+    }
+    protected function processPart(&$part, $mode = 'main')
+    {
+        switch ($part['type']) {
+            case 'text/plain':
+                if (!$this->message) {
+                    $this->setMessage($part['body'], false);
+                }
+                break;
+            case 'text/html':
+                $this->setMessage($part['body'], true);
+                break;
+            default:
+                if (is_array($part['body'])) {
+                    foreach ($part['body'] as $item) {
+                        $this->processPart($item, $part['type']);
+                    }
+                }
+                else {
+                    if ($mode === 'mixed') {
+                        $name = 'attachment';
+                        if (isset($part['head']['Content-Type']) && strpos($part['head']['Content-Type'], 'name=')) {
+                            $name = trim(explode('name=', $part['head']['Content-Type'], 2)[1], '"');
+                        }
+                        $this->addAttachment($part['body'], $name);
+                    }
+                    // depends that the root object is the first one: https://tools.ietf.org/html/rfc2387
+                    if ($mode === 'related' && $this->isHTML() && isset($part['head']['Content-Id'])) {
+                        $body = $this->getMessage();
+                        $relid = trim($part['head']['Content-Id'], '<>');
+                        $related = 'data:' . $part['type'] . ';base64,' . base64_encode($part['body']);
+                        $body = str_replace('cid:' . $relid, $related, $body);
+                        $this->setMessage($body, true);
+                    }
+                }
+                break;
+        }
+    }
+    /**
+     * Create an instance from a stringified mail.
+     * @method fromString
+     * @param  string     $str the mail string
+     * @return \vakata\mail\Mail          the mail instance
+     */
+    public static function fromString($mail)
+    {
+        $rtrn = new self();
+        $mail = $rtrn->parseParts($mail);
+        foreach ($mail['head'] as $k => $v) {
+            switch (strtolower($k)) {
+                case 'to':
+                    $rtrn->setTo($v);
+                    break;
+                case 'cc':
+                    $rtrn->setCc($v);
+                    break;
+                case 'bcc':
+                    $rtrn->setBcc($v);
+                    break;
+                case 'from':
+                    $rtrn->setFrom($v);
+                    break;
+                case 'subject':
+                    $rtrn->setSubject($v);
+                    break;
+                default:
+                    $rtrn->setHeader($k, $v);
+                    break;
+            }
+        }
+        $rtrn->processPart($mail);
+        return $rtrn;
+    }
+
     protected function cleanHeaderName($name)
     {
         if (strncmp($name, 'HTTP_', 5) === 0) {
@@ -249,6 +372,10 @@ class Mail implements MailInterface
      */
     public function setSubject($subject)
     {
+        if (strpos($subject, '=?') === 0) {
+            $subject = explode('?', substr($subject, 0, -2), 4);
+            $subject = base64_decode(array_pop($subject));
+        }
         $this->subject = $subject;
         $this->setHeader('Subject', '=?utf-8?B?'.base64_encode((string) $this->subject).'?=');
         return $this;
@@ -461,9 +588,9 @@ class Mail implements MailInterface
                 $alternative .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
                 $alternative .= preg_replace_callback(
                     [
-                        '(\<img(.*?)src\s*=\s*"([^"]+)")i',
-                        '(\<img(.*?)src\s*=\s*\'([^\']+)\')i',
-                        '(\<img(.*?)src=([^\'" ]+))i'
+                        '(\<img(.*?)src\s*=\s*"([^"]+)")is',
+                        '(\<img(.*?)src\s*=\s*\'([^\']+)\')is',
+                        '(\<img(.*?)src=([^\'" ]+))is'
                     ],
                     function ($matches) use (&$images) {
                         $k = md5($matches[2]).'@local.dev';
@@ -474,12 +601,25 @@ class Mail implements MailInterface
                 );
                 $alternative .= "\r\n\r\n";
                 foreach ($images as $k => $image) {
-                    $content = file_get_contents($image);
-
-                    $fnfo = finfo_open(FILEINFO_MIME_TYPE);
-                    $mime = @finfo_buffer($fnfo, $content);
-                    $extn = basename($image);
-                    $extn = substr($extn, strrpos($extn, '.') + 1);
+                    if (substr($image, 0, 5) === 'data:') {
+                        list($mime, $content) = explode(';', substr($image, 5), 2);
+                        $mime = explode('/', $mime);
+                        if ($mime[0] !== 'image' || substr($content, 0, 6) !== 'base64') {
+                            continue;
+                        }
+                        $content = substr($content, 6);
+                        $extn = $mime[1];
+                        $mime = implode('/', $mime);
+                    }
+                    else {
+                        $content = file_get_contents($image);
+                        $fnfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $mime = @finfo_buffer($fnfo, $content);
+                        finfo_close($fnfo);
+                        $extn = basename($image);
+                        $extn = substr($extn, strrpos($extn, '.') + 1);
+                        $content = base64_encode($content);
+                    }
                     if (!$mime) {
                         continue;
                     }
@@ -487,7 +627,7 @@ class Mail implements MailInterface
                     $alternative .= 'Content-Type: '.$mime.'; name="'.md5($k).'.'.$extn.'"'."\r\n";
                     $alternative .= 'Content-Transfer-Encoding: base64'."\r\n";
                     $alternative .= 'Content-ID: <'.$k.'>'."\r\n\r\n";
-                    $alternative .= chunk_split(base64_encode($content))."\r\n\r\n";
+                    $alternative .= chunk_split($content)."\r\n\r\n";
                 }
                 $alternative .= '--'.$relatedBnd.'--'."\r\n\r\n";
             } else {

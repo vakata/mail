@@ -6,6 +6,7 @@ A class representing an e-mail message (headers, body, etc).
 | Name | Description |
 |------|-------------|
 |[__construct](#vakata\mail\mail__construct)|Create an instance. Optionally supply initial values for from / subject and the email body.|
+|[fromString](#vakata\mail\mailfromstring)|Create an instance from a stringified mail.|
 |[getTo](#vakata\mail\mailgetto)|Retrieve the recipients.|
 |[setTo](#vakata\mail\mailsetto)|Set the recipients.|
 |[getCc](#vakata\mail\mailgetcc)|Retrieve the carbon copy recipients.|
@@ -53,6 +54,25 @@ public function __construct (
 | `$from` | `string` | the from field, can be either an email or First Last <email@addesss.com> |
 | `$subject` | `string` | the email subject |
 | `$message` | `string` | the message body |
+
+---
+
+
+### vakata\mail\Mail::fromString
+Create an instance from a stringified mail.  
+
+
+```php
+public static function fromString (  
+    string $str  
+) : \vakata\mail\Mail    
+```
+
+|  | Type | Description |
+|-----|-----|-----|
+| `$str` | `string` | the mail string |
+|  |  |  |
+| `return` | [`\vakata\mail\Mail`](Mail.md) | the mail instance |
 
 ---
 

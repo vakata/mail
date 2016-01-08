@@ -23,11 +23,20 @@ class MailSender implements SenderInterface
             $mail->getBcc(true)
         );
         list($headers, $message) = explode("\r\n\r\n", (string)$mail, 2);
+        $headers = explode("\r\n", preg_replace("(\r\n\s+)", " ", $headers));
+        foreach ($headers as $k => $v) {
+            if (strtolower(substr($v, 0, 8)) === 'subject:') {
+                unset($headers[$k]);
+            }
+            if (strtolower(substr($v, 0, 3)) === 'to:') {
+                unset($headers[$k]);
+            }
+        }
         return @mail(
             implode(', ', $mail->getTo(true)),
             '=?utf-8?B?'.base64_encode((string) $mail->getSubject()).'?=',
             $message,
-            $headers
+            str_replace(" boundary=", "\r\n\t", implode("\r\n", $headers))
         ) ? [ 'good' => $all, 'fail' => [] ] : [ 'fail' => $all, 'good' => [] ];
     }
 }
