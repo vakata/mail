@@ -83,7 +83,7 @@ class Mail implements MailInterface
         // multipart
         $type = explode(';', explode('multipart/', $headers['Content-Type'], 2)[1], 2)[0];
         $bndr = trim(explode(' boundary=', $headers['Content-Type'])[1],'"');
-        $parts = explode('--' . $bndr, $body);
+        $parts = explode("\r\n" . '--' . $bndr, "\r\n" . $body);
         array_pop($parts);
         array_shift($parts);
         $rslt = [
