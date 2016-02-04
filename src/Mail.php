@@ -82,7 +82,7 @@ class Mail implements MailInterface
 
         // multipart
         $type = explode(';', explode('multipart/', $headers['Content-Type'], 2)[1], 2)[0];
-        $bndr = trim(explode(' boundary=', $headers['Content-Type'])[1],'"');
+        $bndr = trim(explode(' boundary=', $headers['Content-Type'])[1], '"');
         $parts = explode("\r\n" . '--' . $bndr, "\r\n" . $body);
         array_pop($parts);
         array_shift($parts);
@@ -112,8 +112,7 @@ class Mail implements MailInterface
                     foreach ($part['body'] as $item) {
                         $this->processPart($item, $part['type']);
                     }
-                }
-                else {
+                } else {
                     if ($mode === 'mixed') {
                         $name = 'attachment';
                         if (isset($part['head']['Content-Type']) && strpos($part['head']['Content-Type'], 'name=')) {
@@ -227,7 +226,9 @@ class Mail implements MailInterface
     public function getTo($mailOnly = false)
     {
         return $mailOnly ?
-            array_map(function ($v) { return $v['mail']; }, $this->to) :
+            array_map(function ($v) {
+                return $v['mail'];
+            }, $this->to) :
             $this->to;
     }
     /**
@@ -250,7 +251,12 @@ class Mail implements MailInterface
         }
         $this->removeHeader('To');
         if (count($this->to)) {
-            $this->setHeader('To', implode(',', array_map(function ($v) { return $v['string']; }, $this->to)));
+            $this->setHeader(
+                'To',
+                implode(',', array_map(function ($v) {
+                    return $v['string'];
+                }, $this->to))
+            );
         }
 
         return $this;
@@ -264,7 +270,9 @@ class Mail implements MailInterface
     public function getCc($mailOnly = false)
     {
         return $mailOnly ?
-            array_map(function ($v) { return $v['mail']; }, $this->cc) :
+            array_map(function ($v) {
+                return $v['mail'];
+            }, $this->cc) :
             $this->cc;
     }
     /**
@@ -287,7 +295,12 @@ class Mail implements MailInterface
         }
         $this->removeHeader('CC');
         if (count($this->cc)) {
-            $this->setHeader('CC', implode(',', array_map(function ($v) { return $v['string']; }, $this->cc)));
+            $this->setHeader(
+                'CC',
+                implode(',', array_map(function ($v) {
+                    return $v['string'];
+                }, $this->cc))
+            );
         }
 
         return $this;
@@ -301,7 +314,9 @@ class Mail implements MailInterface
     public function getBcc($mailOnly = false)
     {
         return $mailOnly ?
-            array_map(function ($v) { return $v['mail']; }, $this->bcc) :
+            array_map(function ($v) {
+                return $v['mail'];
+            }, $this->bcc) :
             $this->bcc;
     }
     /**
@@ -324,7 +339,12 @@ class Mail implements MailInterface
         }
         $this->removeHeader('BCC');
         if (count($this->bcc)) {
-            $this->setHeader('BCC', implode(',', array_map(function ($v) { return $v['string']; }, $this->bcc)));
+            $this->setHeader(
+                'BCC',
+                implode(',', array_map(function ($v) {
+                    return $v['string'];
+                }, $this->bcc))
+            );
         }
 
         return $this;
@@ -610,8 +630,7 @@ class Mail implements MailInterface
                         $content = substr($content, 6);
                         $extn = $mime[1];
                         $mime = implode('/', $mime);
-                    }
-                    else {
+                    } else {
                         $content = file_get_contents($image);
                         $fnfo = finfo_open(FILEINFO_MIME_TYPE);
                         $mime = @finfo_buffer($fnfo, $content);
