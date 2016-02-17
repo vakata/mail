@@ -46,6 +46,90 @@ class Mail implements MailInterface
         );
     }
 
+    /**
+     * A static helper function to convert HTML to text.
+     * @method htmlToText
+     * @param  string     $html the HTML to convert
+     * @return string           the plain text data from the HTML string
+     */
+    public static function htmlToText($html) {
+        $ddoc = new \DOMDocument();
+        $html = str_replace(["\r\n", '\r'], ["\n", ""], $html);
+        if (!$ddoc->loadHTML($html)) {
+            return html_entity_decode(strip_tags($html), ENT_QUOTES);
+        }
+        $processNode = function ($node) use (&$processNode) {
+            if ($node instanceof \DOMText) {
+                return preg_replace('([\s ]+)im', ' ', $node->wholeText);
+            }
+            if ($node instanceof \DOMDocumentType) {
+                return "";
+            }
+
+            $inner = "";
+            if (isset($node->childNodes)) {
+                for ($i = 0; $i < $node->childNodes->length; $i++) {
+                    $inner .= $processNode($node->childNodes->item($i));
+                }
+            }
+
+            $output = "";
+            switch (strtolower($node->nodeName)) {
+                case "style":
+                case "head":
+                case "title":
+                case "meta":
+                case "link":
+                case "script":
+                    break;
+                case "h1":
+                case "h2":
+                case "h3":
+                case "h4":
+                case "h5":
+                case "h6":
+                    $output .= "\n\n" . $inner . "\n\n";
+                    break;
+                case "hr":
+                    $output .= "----------------------------------"."\n";
+                    break;
+                case "br":
+                    $output .= "\n";
+                    break;
+                case "p":
+                case "div":
+                case "tr":
+                case "ol":
+                case "ul":
+                    $output .= "\n" . $inner . "\n";
+                    break;
+                case "td":
+                case "th":
+                    $output .= $inner . " "; //"\t";
+                    break;
+                case "li":
+                    $output .= ' - ' . $inner . "\n";
+                    break;
+                case "a":
+                    $href = $node->getAttribute("href");
+                    $output .= $inner;
+                    if ($inner !== $href) {
+                        $output .= ' (' . $href . ')';
+                    }
+                    break;
+                case "img":
+                    $output .= implode(' ', array_filter([ $node->getAttribute("title"), $node->getAttribute("alt") ]));
+                    break;
+                default:
+                    // default to append the text content of the node
+                    $output .= $inner;
+                    break;
+            }
+            return $output;
+        };
+        return $processNode($ddoc);
+    }
+
     protected function parseParts($body)
     {
         $body = str_replace(["\r\n", "\n"], ["\n", "\r\n"], $body);
@@ -568,36 +652,38 @@ class Mail implements MailInterface
      */
     public function __toString()
     {
-        $message = str_replace(array("\r\n", "\r"), "\n", (string) $this->message);
-        $message = explode("\n", $message);
-        $length = 76;
-        $result = '';
-        foreach ($message as $row) {
-            if (strlen($row) < $length) {
-                $result .= $row."\r\n";
-                continue;
-            }
-            $cnt = 0;
-            $row = explode(' ', $row);
-            foreach ($row as $k => $wrd) {
-                if ($cnt > 0 && $cnt + strlen($wrd) + ($k == count($row) - 1 ? 0 : 1) > $length) {
-                    $result .= "\r\n";
-                    $cnt = 0;
-                }
-                $result .= $wrd.($k == count($row) - 1 ? '' : ' ');
-                $cnt += strlen($wrd);
-            }
-            $result = rtrim($result);
-            $result .= "\r\n";
-        }
+        // $message = str_replace(array("\r\n", "\r"), "\n", (string) $this->message);
+        // $message = explode("\n", $message);
+        // $length = 76;
+        // $result = '';
+        // foreach ($message as $row) {
+        //     if (strlen($row) < $length) {
+        //         $result .= $row."\r\n";
+        //         continue;
+        //     }
+        //     $cnt = 0;
+        //     $row = explode(' ', $row);
+        //     foreach ($row as $k => $wrd) {
+        //         if ($cnt > 0 && $cnt + strlen($wrd) + ($k == count($row) - 1 ? 0 : 1) > $length) {
+        //             $result .= "\r\n";
+        //             $cnt = 0;
+        //         }
+        //         $result .= $wrd.($k == count($row) - 1 ? '' : ' ');
+        //         $cnt += strlen($wrd);
+        //     }
+        //     $result = rtrim($result);
+        //     $result .= "\r\n";
+        // }
+
+        $result = (string) $this->message;
 
         $resultBnd = '==Alternative_Boundary_x'.md5(microtime()).'x';
         if ($this->html) {
             $alternative = '';
             $alternative .= '--'.$resultBnd."\r\n";
             $alternative .= 'Content-Type: text/plain; charset="utf-8"'."\r\n";
-            $alternative .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
-            $alternative .= strip_tags($result)."\r\n\r\n";
+            $alternative .= 'Content-Transfer-Encoding: quoted-printable'."\r\n\r\n";
+            $alternative .= quoted_printable_encode(static::htmlToText($result))."\r\n\r\n";
             $alternative .= '--'.$resultBnd."\r\n";
             if (strpos($result, '<img ') !== false) {
                 $images = [];
@@ -605,8 +691,8 @@ class Mail implements MailInterface
                 $alternative .= 'Content-Type: multipart/related; '."\r\n\t".'boundary="'.$relatedBnd.'"'."\r\n\r\n";
                 $alternative .= '--'.$relatedBnd."\r\n";
                 $alternative .= 'Content-Type: text/html; charset="utf-8"'."\r\n";
-                $alternative .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
-                $alternative .= preg_replace_callback(
+                $alternative .= 'Content-Transfer-Encoding: quoted-printable'."\r\n\r\n";
+                $alternative .= quoted_printable_encode(preg_replace_callback(
                     [
                         '(\<img(.*?)src\s*=\s*"([^"]+)")is',
                         '(\<img(.*?)src\s*=\s*\'([^\']+)\')is',
@@ -618,7 +704,7 @@ class Mail implements MailInterface
                         return '<img '.$matches[1].' src="cid:'.$k.'" ';
                     },
                     $result
-                );
+                ));
                 $alternative .= "\r\n\r\n";
                 foreach ($images as $k => $image) {
                     if (substr($image, 0, 5) === 'data:') {
@@ -651,8 +737,8 @@ class Mail implements MailInterface
                 $alternative .= '--'.$relatedBnd.'--'."\r\n\r\n";
             } else {
                 $alternative .= 'Content-Type: text/html; charset="utf-8"'."\r\n";
-                $alternative .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
-                $alternative .= $result."\r\n\r\n";
+                $alternative .= 'Content-Transfer-Encoding: quoted-printable'."\r\n\r\n";
+                $alternative .= quoted_printable_encode($result)."\r\n\r\n";
             }
             $alternative .= '--'.$resultBnd.'--';
             $result = $alternative;
@@ -670,8 +756,8 @@ class Mail implements MailInterface
             } else {
                 $message .= 'Content-Type: text/plain; charset="utf-8"'."\r\n";
             }
-            $message .= 'Content-Transfer-Encoding: 8bit'."\r\n\r\n";
-            $message .= $result."\r\n\r\n";
+            $message .= 'Content-Transfer-Encoding: quoted-printable'."\r\n\r\n";
+            $message .= quoted_printable_encode($result)."\r\n\r\n";
 
             foreach ($this->attached as &$file) {
                 $content = $file[0];
