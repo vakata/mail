@@ -52,7 +52,8 @@ class Mail implements MailInterface
      * @param  string     $html the HTML to convert
      * @return string           the plain text data from the HTML string
      */
-    public static function htmlToText($html) {
+    public static function htmlToText($html)
+    {
         $ddoc = new \DOMDocument();
         $html = str_replace(["\r\n", '\r'], ["\n", ""], $html);
         if (!$ddoc->loadHTML($html)) {
