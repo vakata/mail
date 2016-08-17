@@ -58,10 +58,42 @@ class SMTPSender implements SenderInterface
         $code = substr($data, 0, 3);
         $data = substr($data, 4);
         if (count($expect) && !in_array($code, $expect)) {
-            throw new MailException('SMTP Error : '.$code);
+            throw new MailException('SMTP Error : '.$code . ' ' . $data);
         }
 
         return $data;
+    }
+    protected function helo()
+    {
+        $host = $this->host();
+        try {
+            $data = $this->comm('EHLO '.$host, [250]);
+        } catch (MailException $e) {
+            $data = $this->comm('HELO '.$host, [250]);
+        }
+        // parse hello fields
+        $smtp = array();
+        $data = explode("\n", $data);
+        foreach ($data as $n => $s) {
+            $s = trim(substr($s, 4));
+            if (!$s) {
+                continue;
+            }
+            $s = explode(' ', $s);
+            if (!empty($s)) {
+                if (!$n) {
+                    $n = 'HELO';
+                    $s = $s[0];
+                } else {
+                    $n = array_shift($s);
+                    if ($n == 'SIZE') {
+                        $s = ($s) ? $s[0] : 0;
+                    }
+                }
+                $smtp[$n] = ($s ? $s : true);
+            }
+        }
+        return $smtp;
     }
 
     /**
@@ -91,39 +123,13 @@ class SMTPSender implements SenderInterface
         }
 
         $this->read(); // get announcement if any
-        $host = $this->host();
-        try {
-            $data = $this->comm('EHLO '.$host, [250]);
-        } catch (MailException $e) {
-            $data = $this->comm('HELO '.$host, [250]);
-        }
-        // parse hello fields
-        $smtp = array();
-        $data = explode("\n", $data);
-        foreach ($data as $n => $s) {
-            $s = trim(substr($s, 4));
-            if (!$s) {
-                continue;
-            }
-            $s = explode(' ', $s);
-            if (!empty($s)) {
-                if (!$n) {
-                    $n = 'HELO';
-                    $s = $s[0];
-                } else {
-                    $n = array_shift($s);
-                    if ($n == 'SIZE') {
-                        $s = ($s) ? $s[0] : 0;
-                    }
-                }
-                $smtp[$n] = ($s ? $s : true);
-            }
-        }
+        $smtp = $this->helo();
         if (isset($connection['scheme']) && $connection['scheme'] === 'tls') {
             $this->comm('STARTTLS', [220]);
             if (!stream_socket_enable_crypto($this->connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
                 throw new MailException('Could not secure connection');
             }
+            $smtp = $this->helo();
         }
         if (isset($connection['user'])) {
             $username = $connection['user'];
