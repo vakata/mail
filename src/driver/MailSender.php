@@ -11,7 +11,6 @@ class MailSender implements SenderInterface
 {
     /**
      * Send a message.
-     * @method send
      * @param  \vakata\mail\MailInterface $mail the message to be sent
      * @return array              array with two keys - 'good' and 'bad' - indicating successfull and failed addresses
      */

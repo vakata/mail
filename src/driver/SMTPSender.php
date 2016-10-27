@@ -98,7 +98,6 @@ class SMTPSender implements SenderInterface
 
     /**
      * Create an instance.
-     * @method __construct
      * @param  string      $connection the server connection string (for example `smtp://user:pass@server:port/`)
      */
     public function __construct($connection)
@@ -174,7 +173,6 @@ class SMTPSender implements SenderInterface
     }
     /**
      * A static method used to authenticate against a POP server (some SMTP servers require this)
-     * @method pop
      * @param  string $connection the server connection string (for example `pop://user:pass@server:port/`)
      */
     public static function pop($connection)
@@ -235,7 +233,6 @@ class SMTPSender implements SenderInterface
     }
     /**
      * A static method used to authenticate against an IMAP server (some SMTP servers require this)
-     * @method imap
      * @param  string $connection the server connection string (for example `imap://user:pass@server:port/`)
      */
     public static function imap($connection)
@@ -293,7 +290,6 @@ class SMTPSender implements SenderInterface
     }
     /**
      * Send a message.
-     * @method send
      * @param  \vakata\mail\MailInterface $mail the message to be sent
      * @return array              array with two keys - 'good' and 'bad' - indicating successfull and failed addresses
      */

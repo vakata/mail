@@ -23,7 +23,6 @@ class Mail implements MailInterface
 
     /**
      * Create an instance. Optionally supply initial values for from / subject and the email body.
-     * @method __construct
      * @param  string      $from    the from field, can be either an email or First Last <email@addesss.com>
      * @param  string      $subject the email subject
      * @param  string      $message the message body
@@ -48,7 +47,6 @@ class Mail implements MailInterface
 
     /**
      * A static helper function to convert HTML to text.
-     * @method htmlToText
      * @param  string     $html the HTML to convert
      * @return string           the plain text data from the HTML string
      */
@@ -219,7 +217,6 @@ class Mail implements MailInterface
     }
     /**
      * Create an instance from a stringified mail.
-     * @method fromString
      * @param  string     $str the mail string
      * @return \vakata\mail\Mail          the mail instance
      */
@@ -304,7 +301,6 @@ class Mail implements MailInterface
 
     /**
      * Retrieve the recipients.
-     * @method getTo
      * @param  boolean $mailOnly should only email addresses be included (instead of Name <address>), defaults to false
      * @return array             array of to addresses
      */
@@ -318,7 +314,6 @@ class Mail implements MailInterface
     }
     /**
      * Set the recipients.
-     * @method setTo
      * @param  string|array $mail the new recipients
      * @return self
      */
@@ -348,7 +343,6 @@ class Mail implements MailInterface
     }
     /**
      * Retrieve the carbon copy recipients.
-     * @method getCc
      * @param  boolean $mailOnly should only email addresses be included (instead of Name <address>), defaults to false
      * @return array             array of to addresses
      */
@@ -362,7 +356,6 @@ class Mail implements MailInterface
     }
     /**
      * Set the carbon copy recipients.
-     * @method setCc
      * @param  string|array $mail the new recipients
      * @return self
      */
@@ -392,7 +385,6 @@ class Mail implements MailInterface
     }
     /**
      * Retrieve the blind carbon copy recipients.
-     * @method getBcc
      * @param  boolean $mailOnly should only email addresses be included (instead of Name <address>), defaults to false
      * @return array             array of to addresses
      */
@@ -406,7 +398,6 @@ class Mail implements MailInterface
     }
     /**
      * Set the blind carbon copy recipients.
-     * @method setBcc
      * @param  string|array $mail the new recipients
      * @return self
      */
@@ -436,7 +427,6 @@ class Mail implements MailInterface
     }
     /**
      * Get the sender.
-     * @method getFrom
      * @param  boolean $mailOnly should only an email address be included (instead of Name <address>), defaults to false
      * @return string            the sender data
      */
@@ -446,7 +436,6 @@ class Mail implements MailInterface
     }
     /**
      * Set the sender.
-     * @method setFrom
      * @param  string  $mail the new sender
      * @return self
      */
@@ -463,7 +452,6 @@ class Mail implements MailInterface
     }
     /**
      * Get the message subject.
-     * @method getSubject
      * @return string     the message subject
      */
     public function getSubject()
@@ -472,7 +460,6 @@ class Mail implements MailInterface
     }
     /**
      * Set the message subject (and also set the appropriate headers).
-     * @method setSubject
      * @param  self
      */
     public function setSubject($subject)
@@ -487,7 +474,6 @@ class Mail implements MailInterface
     }
     /**
      * Get the message body.
-     * @method getMessage
      * @return string     the message body
      */
     public function getMessage()
@@ -496,7 +482,6 @@ class Mail implements MailInterface
     }
     /**
      * Set the message body.
-     * @method setMessage
      * @param  string     $message the new message body
      * @param  boolean    $isHTML  is the body HTML formatted (or plain text), defaults to true.
      */
@@ -509,7 +494,6 @@ class Mail implements MailInterface
     }
     /**
      * Is the message HTML formatted.
-     * @method isHTML
      * @return boolean
      */
     public function isHTML()
@@ -518,7 +502,6 @@ class Mail implements MailInterface
     }
     /**
      * Retrieve all set headers.
-     * @method getHeaders
      * @return array     all headers of the message
      */
     public function getHeaders()
@@ -527,7 +510,6 @@ class Mail implements MailInterface
     }
     /**
      * Add a header to the message.
-     * @method setHeader
      * @param  string    $header the header name
      * @param  string    $value  the header value
      * @return  self
@@ -540,7 +522,6 @@ class Mail implements MailInterface
     }
     /**
      * Is a specific header set on the message.
-     * @method hasHeader
      * @param  string    $header the header name
      * @return boolean
      */
@@ -550,7 +531,6 @@ class Mail implements MailInterface
     }
     /**
      * Retieve a header value by name.
-     * @method getHeader
      * @param  string    $header the header name
      * @return string            the header value
      */
@@ -562,7 +542,6 @@ class Mail implements MailInterface
     }
     /**
      * Remove a header from the message by name.
-     * @method removeHeader
      * @param  string       $header the header name
      * @return self
      */
@@ -574,7 +553,6 @@ class Mail implements MailInterface
     }
     /**
      * Remove all headers from the message.
-     * @method removeHeaders
      * @return self
      */
     public function removeHeaders()
@@ -585,7 +563,6 @@ class Mail implements MailInterface
     }
     /**
      * Does the message have attachments.
-     * @method hasAttachments
      * @return int the attachments count
      */
     public function hasAttachments()
@@ -594,7 +571,6 @@ class Mail implements MailInterface
     }
     /**
      * Add an attachment to the message.
-     * @method addAttachment
      * @param  string        $content the contents of the attachment
      * @param  string        $name    the file name for the attachment
      * @return  self
@@ -610,7 +586,6 @@ class Mail implements MailInterface
     }
     /**
      * Retieve a list of all attachments.
-     * @method getAttachments
      * @return array         all attached documents
      */
     public function getAttachments()
@@ -619,7 +594,6 @@ class Mail implements MailInterface
     }
     /**
      * Remove all attachments.
-     * @method removeAttachments
      * @return self
      */
     public function removeAttachments()
@@ -630,7 +604,6 @@ class Mail implements MailInterface
     }
     /**
      * Prepare the message for signing.
-     * @method sign
      * @param  string $crt  path to the public key
      * @param  string $key  path to the private key
      * @param  string $pass the private key password (if necessary)
@@ -648,7 +621,6 @@ class Mail implements MailInterface
     }
     /**
      * Get the ready message as a string (headers and body)
-     * @method __toString
      * @return string     the whole message
      */
     public function __toString()

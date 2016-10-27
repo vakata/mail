@@ -12,7 +12,6 @@ class FileSender implements SenderInterface
 {
     /**
      * Create an instance.
-     * @method __construct
      * @param  string      $dir the path to save all emails to
      */
     public function __construct($dir)
@@ -24,7 +23,6 @@ class FileSender implements SenderInterface
     }
     /**
      * Send a message.
-     * @method send
      * @param  \vakata\mail\MailInterface $mail the message to be sent
      * @return array              array with two keys - 'good' and 'bad' - indicating successfull and failed addresses
      */
