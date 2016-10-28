@@ -269,14 +269,14 @@ class Mail implements MailInterface
             return $mail;
         }
         if (!strpos($mail, '<')) {
-            return;
+            return '';
         }
         $mail = explode('>', explode('<', $mail, 2)[1], 2)[0];
         if (filter_var($mail, FILTER_VALIDATE_EMAIL)) {
             return $mail;
         }
 
-        return;
+        return '';
     }
     protected function getAddressString($mail)
     {
@@ -286,7 +286,7 @@ class Mail implements MailInterface
             return $mail;
         }
         if (!strpos($mail, '<')) {
-            return;
+            return '';
         }
         list($name, $mail) = explode('<', $mail, 2);
         $name = trim($name);
@@ -296,7 +296,7 @@ class Mail implements MailInterface
             return $name.' <'.$mail.'>';
         }
 
-        return;
+        return '';
     }
 
     /**

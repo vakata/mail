@@ -10,6 +10,7 @@ use \vakata\mail\MailException;
  */
 class FileSender implements SenderInterface
 {
+    protected $dir;
     /**
      * Create an instance.
      * @param  string      $dir the path to save all emails to
