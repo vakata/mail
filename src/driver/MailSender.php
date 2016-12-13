@@ -35,7 +35,7 @@ class MailSender implements SenderInterface
             implode(', ', $mail->getTo(true)),
             '=?utf-8?B?'.base64_encode((string) $mail->getSubject()).'?=',
             $message,
-            str_replace(" boundary=", "\r\n\t", implode("\r\n", $headers))
+            str_replace(" boundary=", "\r\n\tboundary=", implode("\r\n", $headers))
         ) ? [ 'good' => $all, 'fail' => [] ] : [ 'fail' => $all, 'good' => [] ];
     }
 }
