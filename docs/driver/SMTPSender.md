@@ -20,13 +20,17 @@ Create an instance.
 
 ```php
 public function __construct (  
-    string $connection  
+    string $connection,  
+    string $user,  
+    string $pass  
 )   
 ```
 
 |  | Type | Description |
 |-----|-----|-----|
 | `$connection` | `string` | the server connection string (for example `smtp://user:pass@server:port/`) |
+| `$user` | `string` | optional way to provide the username (if not included in the connection string) |
+| `$pass` | `string` | optional way to provide the password (if not included in the connection string) |
 
 ---
 
@@ -37,13 +41,17 @@ A static method used to authenticate against a POP server (some SMTP servers req
 
 ```php
 public static function pop (  
-    string $connection  
+    string $connection,  
+    string $user,  
+    string $pass  
 )   
 ```
 
 |  | Type | Description |
 |-----|-----|-----|
 | `$connection` | `string` | the server connection string (for example `pop://user:pass@server:port/`) |
+| `$user` | `string` | optional way to provide the username (if not included in the connection string) |
+| `$pass` | `string` | optional way to provide the password (if not included in the connection string) |
 
 ---
 
@@ -54,13 +62,17 @@ A static method used to authenticate against an IMAP server (some SMTP servers r
 
 ```php
 public static function imap (  
-    string $connection  
+    string $connection,  
+    string $user,  
+    string $pass  
 )   
 ```
 
 |  | Type | Description |
 |-----|-----|-----|
 | `$connection` | `string` | the server connection string (for example `imap://user:pass@server:port/`) |
+| `$user` | `string` | optional way to provide the username (if not included in the connection string) |
+| `$pass` | `string` | optional way to provide the password (if not included in the connection string) |
 
 ---
 

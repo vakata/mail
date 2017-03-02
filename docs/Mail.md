@@ -6,6 +6,7 @@ A class representing an e-mail message (headers, body, etc).
 | Name | Description |
 |------|-------------|
 |[__construct](#vakata\mail\mail__construct)|Create an instance. Optionally supply initial values for from / subject and the email body.|
+|[htmlToText](#vakata\mail\mailhtmltotext)|A static helper function to convert HTML to text.|
 |[fromString](#vakata\mail\mailfromstring)|Create an instance from a stringified mail.|
 |[getTo](#vakata\mail\mailgetto)|Retrieve the recipients.|
 |[setTo](#vakata\mail\mailsetto)|Set the recipients.|
@@ -54,6 +55,25 @@ public function __construct (
 | `$from` | `string` | the from field, can be either an email or First Last <email@addesss.com> |
 | `$subject` | `string` | the email subject |
 | `$message` | `string` | the message body |
+
+---
+
+
+### vakata\mail\Mail::htmlToText
+A static helper function to convert HTML to text.  
+
+
+```php
+public static function htmlToText (  
+    string $html  
+) : string    
+```
+
+|  | Type | Description |
+|-----|-----|-----|
+| `$html` | `string` | the HTML to convert |
+|  |  |  |
+| `return` | `string` | the plain text data from the HTML string |
 
 ---
 

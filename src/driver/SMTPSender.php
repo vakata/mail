@@ -99,12 +99,20 @@ class SMTPSender implements SenderInterface
     /**
      * Create an instance.
      * @param  string      $connection the server connection string (for example `smtp://user:pass@server:port/`)
+     * @param  string $user optional way to provide the username (if not included in the connection string)
+     * @param  string $pass optional way to provide the password (if not included in the connection string)
      */
-    public function __construct($connection)
+    public function __construct($connection, $user = null, $pass = null)
     {
         $connection = parse_url($connection); // host, port, user, pass
         if ($connection === false) {
             throw new MailException('Could not parse SMTP config');
+        }
+        if (!isset($connection['user'])) {
+            $connection['user'] = $user;
+        }
+        if (!isset($connection['pass'])) {
+            $connection['pass'] = $pass;
         }
 
         $errn = 0;
@@ -174,12 +182,20 @@ class SMTPSender implements SenderInterface
     /**
      * A static method used to authenticate against a POP server (some SMTP servers require this)
      * @param  string $connection the server connection string (for example `pop://user:pass@server:port/`)
+     * @param  string $user optional way to provide the username (if not included in the connection string)
+     * @param  string $pass optional way to provide the password (if not included in the connection string)
      */
-    public static function pop($connection)
+    public static function pop($connection, $user = null, $pass = null)
     {
         $connection = parse_url($connection); // host, port, user, pass
         if ($connection === false) {
             throw new MailException('Could not parse POP config');
+        }
+        if (!isset($connection['user'])) {
+            $connection['user'] = $user;
+        }
+        if (!isset($connection['pass'])) {
+            $connection['pass'] = $pass;
         }
 
         $errn = 0;
@@ -234,12 +250,20 @@ class SMTPSender implements SenderInterface
     /**
      * A static method used to authenticate against an IMAP server (some SMTP servers require this)
      * @param  string $connection the server connection string (for example `imap://user:pass@server:port/`)
+     * @param  string $user optional way to provide the username (if not included in the connection string)
+     * @param  string $pass optional way to provide the password (if not included in the connection string)
      */
-    public static function imap($connection)
+    public static function imap($connection, $user = null, $pass = null)
     {
         $connection = parse_url($connection); // host, port, user, pass
         if ($connection === false) {
             throw new MailException('Could not parse IMAP config');
+        }
+        if (!isset($connection['user'])) {
+            $connection['user'] = $user;
+        }
+        if (!isset($connection['pass'])) {
+            $connection['pass'] = $pass;
         }
 
         $errn = 0;
