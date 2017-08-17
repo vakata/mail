@@ -52,8 +52,11 @@ class Mail implements MailInterface
      */
     public static function htmlToText($html)
     {
+        $html = str_replace(["\r\n", "\r", "\n"], ["\n", "", "\r\n"], $html);
+        if (!class_exists("\DOMDocument")) {
+            return html_entity_decode(strip_tags($html), ENT_QUOTES);
+        }
         $ddoc = new \DOMDocument();
-        $html = str_replace(["\r\n", '\r'], ["\n", ""], $html);
         if (!$ddoc->loadHTML($html)) {
             return html_entity_decode(strip_tags($html), ENT_QUOTES);
         }
@@ -87,27 +90,27 @@ class Mail implements MailInterface
                 case "h4":
                 case "h5":
                 case "h6":
-                    $output .= "\n\n" . $inner . "\n\n";
+                    $output .= "\r\n\r\n" . $inner . "\r\n\r\n";
                     break;
                 case "hr":
-                    $output .= "----------------------------------"."\n";
+                    $output .= "----------------------------------"."\r\n";
                     break;
                 case "br":
-                    $output .= "\n";
+                    $output .= "\r\n";
                     break;
                 case "p":
                 case "div":
                 case "tr":
                 case "ol":
                 case "ul":
-                    $output .= "\n" . $inner . "\n";
+                    $output .= "\r\n" . $inner . "\r\n";
                     break;
                 case "td":
                 case "th":
                     $output .= $inner . " "; //"\t";
                     break;
                 case "li":
-                    $output .= ' - ' . $inner . "\n";
+                    $output .= ' - ' . $inner . "\r\n";
                     break;
                 case "a":
                     $href = $node->getAttribute("href");
@@ -719,34 +722,38 @@ class Mail implements MailInterface
 
         if ($this->hasAttachments()) {
             $bnd = '==Multipart_Boundary_x'.md5(microtime()).'x';
-            $this->setHeader('MIME-Version', '1.0;');
+            $this->setHeader('MIME-Version', '1.0');
             $this->setHeader('Content-Type', 'multipart/mixed; '."\r\n\t".'boundary="'.$bnd.'"');
 
             $message = '';
             $message .= '--'.$bnd."\r\n";
             if ($this->html) {
                 $message .= 'Content-Type: multipart/alternative; '."\r\n\t".'boundary="'.$resultBnd.'"'."\r\n";
+                $message .= "\r\n";
+                $message .= $result."\r\n\r\n";
             } else {
                 $message .= 'Content-Type: text/plain; charset="utf-8"'."\r\n";
+                $message .= 'Content-Transfer-Encoding: quoted-printable'."\r\n\r\n";
+                $message .= quoted_printable_encode($result)."\r\n\r\n";
             }
-            $message .= 'Content-Transfer-Encoding: quoted-printable'."\r\n\r\n";
-            $message .= quoted_printable_encode($result)."\r\n\r\n";
 
             foreach ($this->attached as &$file) {
                 $content = $file[0];
                 $size = strlen($content);
                 $content = chunk_split(base64_encode($content));
                 $message .= '--'.$bnd."\r\n";
-                $message .= 'Content-Type: application/octet-stream; name="';
+                $message .= 'Content-Type: application/octet-stream;'."\r\n\t".'name="';
                 $message .= '=?utf-8?B?'.base64_encode($file[1]).'?=';
                 $message .= '"'."\r\n";
-                $message .= 'Content-Disposition: attachment; size='.$size."\r\n";
+                $message .= 'Content-Disposition: attachment; size='.$size.';'."\r\n\t".'filename="';
+                $message .= '=?utf-8?B?'.base64_encode($file[1]).'?=';
+                $message .= '"'."\r\n";
                 $message .= 'Content-Transfer-Encoding: base64'."\r\n\r\n";
                 $message .= $content."\r\n\r\n";
             }
             $message .= '--'.$bnd.'--';
         } else {
-            $this->setHeader('MIME-Version', '1.0;');
+            $this->setHeader('MIME-Version', '1.0');
             if ($this->html) {
                 $this->setHeader('Content-Type', 'multipart/alternative; '."\r\n\t".'boundary="'.$resultBnd.'"');
             } else {
