@@ -53,11 +53,17 @@ class Mail implements MailInterface
     public static function htmlToText($html)
     {
         $html = str_replace(["\r\n", "\r", "\n"], ["\n", "", "\r\n"], $html);
-        if (!class_exists("\DOMDocument")) {
-            return html_entity_decode(strip_tags($html), ENT_QUOTES);
-        }
-        $ddoc = new \DOMDocument();
-        if (!$ddoc->loadHTML($html)) {
+        
+        try {
+            if (!class_exists("\DOMDocument")) {
+                throw new MailException("No DOMDocument, fallback");
+            }
+            $ddoc = new \DOMDocument();
+            // ugly fix to make sure document is treated like utf-8
+            if (!$ddoc->loadHTML('<?xml encoding="utf-8" ?>' . $html)) {
+                throw new MailException("Malformed HTML");
+            }
+        } catch (\Exception $e) {
             return html_entity_decode(strip_tags($html), ENT_QUOTES);
         }
         $processNode = function ($node) use (&$processNode) {
@@ -664,7 +670,7 @@ class Mail implements MailInterface
             if (strpos($result, '<img ') !== false) {
                 $images = [];
                 $relatedBnd = '==Related_Boundary_x'.md5(microtime()).'x';
-                $alternative .= 'Content-Type: multipart/related; '."\r\n\t".'boundary="'.$relatedBnd.'"'."\r\n\r\n";
+                $alternative .= 'Content-Type: multipart/related; type="multipart/alternative"; '."\r\n\t".'boundary="'.$relatedBnd.'"'."\r\n\r\n";
                 $alternative .= '--'.$relatedBnd."\r\n";
                 $alternative .= 'Content-Type: text/html; charset="utf-8"'."\r\n";
                 $alternative .= 'Content-Transfer-Encoding: quoted-printable'."\r\n\r\n";
@@ -706,6 +712,7 @@ class Mail implements MailInterface
                     }
                     $alternative .= '--'.$relatedBnd."\r\n";
                     $alternative .= 'Content-Type: '.$mime.'; name="'.md5($k).'.'.$extn.'"'."\r\n";
+                    $alternative .= 'Content-Disposition: inline; filename='.md5($k).'.'.$extn.''."\r\n";
                     $alternative .= 'Content-Transfer-Encoding: base64'."\r\n";
                     $alternative .= 'Content-ID: <'.$k.'>'."\r\n\r\n";
                     $alternative .= chunk_split($content)."\r\n\r\n";
@@ -758,6 +765,8 @@ class Mail implements MailInterface
                 $this->setHeader('Content-Type', 'multipart/alternative; '."\r\n\t".'boundary="'.$resultBnd.'"');
             } else {
                 $this->setHeader('Content-Type', 'text/plain; charset="utf-8"');
+                $this->setHeader('Content-Transfer-Encoding', 'quoted-printable');
+                $result = quoted_printable_encode($result);
             }
             $message = $result;
         }
