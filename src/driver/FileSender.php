@@ -17,10 +17,7 @@ class FileSender implements SenderInterface
      */
     public function __construct($dir)
     {
-        $this->dir = realpath($dir);
-        if (!$this->dir) {
-            throw new MailException('Invalid mail dump dir');
-        }
+        $this->dir = $dir;
     }
     /**
      * Send a message.
@@ -30,6 +27,13 @@ class FileSender implements SenderInterface
     public function send(MailInterface $mail)
     {
         $data = (string)$mail;
+        if (!is_dir(realpath($this->dir))) {
+            mkdir($this->dir, 0777, true);
+            $this->dir = realpath($this->dir);
+            if (!is_dir($this->dir)) {
+                throw new MailException('Invalid mail dump dir');
+            }
+        }
         file_put_contents($this->dir . DIRECTORY_SEPARATOR . time() . '_' . md5($data) . '.txt', $data);
         return [
             'good' => array_merge(
