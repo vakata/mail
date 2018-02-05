@@ -15,13 +15,6 @@
             "role": "Developer"
         }
     ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/vakata/phpdoc-md",
-            "clean/phpdoc-md": "dev-master"
-        }
-    ],
     "require": {
         "php" : ">=5.4.0"
     },
