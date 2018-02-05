@@ -315,7 +315,7 @@ class SMTPSender implements SenderInterface
     /**
      * Send a message.
      * @param  \vakata\mail\MailInterface $mail the message to be sent
-     * @return array              array with two keys - 'good' and 'bad' - indicating successfull and failed addresses
+     * @return array              array with two keys - 'good' and 'fail' - indicating successfull and failed addresses
      */
     public function send(MailInterface $mail)
     {
