@@ -165,6 +165,16 @@ class Mail implements MailInterface
             if (isset($headers['Content-Type'])) {
                 $type = explode(';', $headers['Content-Type'], 2)[0];
             }
+            $charset = null;
+            if (isset($headers['Content-Type']) && strpos($headers['Content-Type'], 'charset=') !== false) {
+                $charset = trim(explode('charset=', $headers['Content-Type'], 2)[1], " ;\"'");
+            }
+            if ($charset && $charset !== 'utf-8' && function_exists("iconv")) {
+                $temp = @iconv($charset, 'utf-8', $body);
+                if ($temp) {
+                    $body = $temp;
+                }
+            }
             return [
                 'head' => $headers,
                 'type' => $type,
@@ -174,7 +184,7 @@ class Mail implements MailInterface
 
         // multipart
         $type = explode(';', explode('multipart/', $headers['Content-Type'], 2)[1], 2)[0];
-        $bndr = trim(explode(' boundary=', $headers['Content-Type'])[1], '"');
+        $bndr = trim(explode(';', explode(' boundary=', $headers['Content-Type'])[1])[0], '"');
         $parts = explode("\r\n" . '--' . $bndr, "\r\n" . $body);
         array_pop($parts);
         array_shift($parts);
@@ -208,7 +218,7 @@ class Mail implements MailInterface
                     if ($mode === 'mixed') {
                         $name = 'attachment';
                         if (isset($part['head']['Content-Type']) && strpos($part['head']['Content-Type'], 'name=')) {
-                            $name = trim(explode('name=', $part['head']['Content-Type'], 2)[1], '"');
+                            $name = static::rfc1342decode(trim(explode('name=', $part['head']['Content-Type'], 2)[1], '"'));
                         }
                         $this->addAttachment($part['body'], $name);
                     }
@@ -307,6 +317,40 @@ class Mail implements MailInterface
 
         return '';
     }
+    protected function getAddressName($mail)
+    {
+        $mail = trim($mail);
+        $mail = preg_replace(['(^\<)', '(\>$)'], '', $mail);
+        if (filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+            return '';
+        }
+        if (!strpos($mail, '<')) {
+            return '';
+        }
+        list($name, $mail) = explode('<', $mail, 2);
+        $name = trim($name);
+        return static::rfc1342decode($name);
+    }
+    public static function rfc1342decode($data)
+    {
+        if (strpos($data, '=?') !== 0) {
+            return $data;
+        }
+        $data = explode('?', substr(trim($data), 2, -2), 3);
+        if (!count($data) === 3 || !in_array(strtoupper($data[1]), ['Q', 'B'])) {
+            return '';
+        }
+        if (strtoupper($data[1]) === 'B') {
+            $data[2] = base64_decode($data[2]);
+        }
+        if (strtoupper($data[1]) === 'Q') {
+            $data[2] = quoted_printable_decode($data[2]);
+        }
+        if (strtolower($data[0]) !== 'utf-8' && function_exists("iconv")) {
+            $data[2] = @iconv($data[0], 'utf-8', $data[2]);
+        }
+        return $data[2] ? $data[2] : '';
+    }
 
     /**
      * Retrieve the recipients.
@@ -335,7 +379,7 @@ class Mail implements MailInterface
         foreach ($mail as $m) {
             $temp = $this->getAddress($m);
             if ($temp) {
-                $this->to[] = [ 'mail' => $temp, 'string' => $this->getAddressString($m) ];
+                $this->to[] = [ 'mail' => $temp, 'name' => $this->getAddressName($m), 'string' => $this->getAddressString($m) ];
             }
         }
         $this->removeHeader('To');
@@ -377,7 +421,7 @@ class Mail implements MailInterface
         foreach ($mail as $m) {
             $temp = $this->getAddress($m);
             if ($temp) {
-                $this->cc[] = [ 'mail' => $temp, 'string' => $this->getAddressString($m) ];
+                $this->cc[] = [ 'mail' => $temp, 'name' => $this->getAddressName($m), 'string' => $this->getAddressString($m) ];
             }
         }
         $this->removeHeader('CC');
@@ -419,7 +463,7 @@ class Mail implements MailInterface
         foreach ($mail as $m) {
             $temp = $this->getAddress($m);
             if ($temp) {
-                $this->bcc[] = [ 'mail' => $temp, 'string' => $this->getAddressString($m) ];
+                $this->bcc[] = [ 'mail' => $temp,'name' => $this->getAddressName($m), 'string' => $this->getAddressString($m) ];
             }
         }
         $this->removeHeader('BCC');
@@ -441,7 +485,9 @@ class Mail implements MailInterface
      */
     public function getFrom($mailOnly = false)
     {
-        return $mailOnly ? $this->getAddress($this->from) : $this->from;
+        $mail = $this->getAddress($this->from);
+        $name = $this->getAddressName($this->from);
+        return $mailOnly || !$name ? $mail : $name . ' <' . $mail . '>';
     }
     /**
      * Set the sender.
@@ -473,11 +519,7 @@ class Mail implements MailInterface
      */
     public function setSubject($subject)
     {
-        if (strpos($subject, '=?') === 0) {
-            $subject = explode('?', substr($subject, 0, -2), 4);
-            $subject = base64_decode(array_pop($subject));
-        }
-        $this->subject = $subject;
+        $this->subject = static::rfc1342decode($subject);
         $this->setHeader('Subject', '=?utf-8?B?'.base64_encode((string) $this->subject).'?=');
         return $this;
     }
