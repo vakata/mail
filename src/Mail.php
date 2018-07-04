@@ -68,7 +68,7 @@ class Mail implements MailInterface
         }
         $processNode = function ($node) use (&$processNode) {
             if ($node instanceof \DOMText) {
-                return preg_replace('([\s ]+)im', ' ', $node->wholeText);
+                return preg_replace('([\s ]+)uim', ' ', $node->wholeText);
             }
             if ($node instanceof \DOMDocumentType) {
                 return "";
