@@ -60,7 +60,7 @@ class Mail implements MailInterface
             }
             $ddoc = new \DOMDocument();
             // ugly fix to make sure document is treated like utf-8
-            if (!$ddoc->loadHTML('<?xml encoding="utf-8" ?>' . $html)) {
+            if (!$ddoc->loadHTML('<?xml encoding="utf-8" ?>' . preg_replace('(<meta[^>])ui', '', $html))) {
                 throw new MailException("Malformed HTML");
             }
         } catch (\Exception $e) {
