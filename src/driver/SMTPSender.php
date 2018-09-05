@@ -10,6 +10,7 @@ use \vakata\mail\MailInterface;
  */
 class SMTPSender implements SenderInterface
 {
+    protected $config = null;
     protected $connection = null;
 
     protected function host()
@@ -114,10 +115,22 @@ class SMTPSender implements SenderInterface
         if (!isset($connection['pass'])) {
             $connection['pass'] = $pass;
         }
+        $this->config = $connection;
+    }
 
+    public function connected()
+    {
+        return is_resource($this->connection);
+    }
+    public function connect()
+    {
+        if ($this->connected()) {
+            $this->disconnect();
+        }
         $errn = 0;
         $errs = '';
         set_time_limit(300); // default is 5 minutes
+        $connection = $this->config;
         $this->connection = stream_socket_client(
             (isset($connection['scheme']) && $connection['scheme'] === 'ssl' ? 'ssl://' : '').$connection['host'].':'.(isset($connection['port']) ? $connection['port'] : 25),
             $errn,
@@ -166,9 +179,9 @@ class SMTPSender implements SenderInterface
                     $this->comm(base64_encode($username.' '.hash_hmac('md5', $challenge, $password)), [235]);
             }
         }
+        return $this;
     }
-
-    public function __destruct()
+    public function disconnect()
     {
         try {
             if (is_resource($this->connection)) {
@@ -178,6 +191,12 @@ class SMTPSender implements SenderInterface
             $this->connection = null;
         } catch (\Exception $ignore) {
         }
+        return $this;
+    }
+
+    public function __destruct()
+    {
+        $this->disconnect();
     }
     /**
      * A static method used to authenticate against a POP server (some SMTP servers require this)
@@ -319,6 +338,9 @@ class SMTPSender implements SenderInterface
      */
     public function send(MailInterface $mail)
     {
+        if (!$this->connected()) {
+            $this->connect();
+        }
         $this->comm('MAIL FROM:<'.$mail->getFrom(true).'>', [250]);
         $recp = array_merge(
             $mail->getTo(true),
