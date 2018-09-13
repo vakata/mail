@@ -333,6 +333,13 @@ class Mail implements MailInterface
     }
     public static function rfc1342decode($data)
     {
+        $temp = explode(" ", trim($data));
+        if (count($temp) > 1) {
+            foreach ($temp as $k => $v) {
+                $temp[$k] = static::rfc1342decode($v);
+            }
+            return implode('', $temp);
+        }
         if (strpos($data, '=?') !== 0) {
             return $data;
         }
