@@ -309,7 +309,7 @@ class Mail implements MailInterface
         }
         list($name, $mail) = explode('<', $mail, 2);
         $name = trim($name);
-        $name = strpos($name, '=?') === 0 ? $name : '=?utf-8?B?'.base64_encode($name).'?=';
+        $name = strpos($name, '=?') === 0 ? $name : static::rfc1342encode($name);
         $mail = explode('>', trim($mail), 2)[0];
         if (filter_var($mail, FILTER_VALIDATE_EMAIL)) {
             return $name.' <'.$mail.'>';
@@ -331,17 +331,29 @@ class Mail implements MailInterface
         $name = trim($name);
         return static::rfc1342decode($name);
     }
+    public static function rfc1342encode($data)
+    {
+        $data = (string)$data;
+        if (strlen($data) > 40) {
+            $temp = str_split($data, 40);
+            foreach ($temp as $k => $v) {
+                $temp[$k] = static::rfc1342encode($v);
+            }
+            return implode("\r\n\t", $temp);
+        }
+        return '=?utf-8?B?'.base64_encode($data).'?=';
+    }
     public static function rfc1342decode($data)
     {
-        $temp = explode(" ", trim($data));
+        if (strpos($data, '=?') !== 0) {
+            return $data;
+        }
+        $temp = preg_split('([\r\n\t\s]+)', trim($data));
         if (count($temp) > 1) {
             foreach ($temp as $k => $v) {
                 $temp[$k] = static::rfc1342decode($v);
             }
             return implode('', $temp);
-        }
-        if (strpos($data, '=?') !== 0) {
-            return $data;
         }
         $data = explode('?', substr(trim($data), 2, -2), 3);
         if (!count($data) === 3 || !in_array(strtoupper($data[1]), ['Q', 'B'])) {
@@ -393,7 +405,7 @@ class Mail implements MailInterface
         if (count($this->to)) {
             $this->setHeader(
                 'To',
-                implode(',', array_map(function ($v) {
+                implode(',' . "\r\n\t", array_map(function ($v) {
                     return $v['string'];
                 }, $this->to))
             );
@@ -435,7 +447,7 @@ class Mail implements MailInterface
         if (count($this->cc)) {
             $this->setHeader(
                 'CC',
-                implode(',', array_map(function ($v) {
+                implode(',' . "\r\n\t", array_map(function ($v) {
                     return $v['string'];
                 }, $this->cc))
             );
@@ -477,7 +489,7 @@ class Mail implements MailInterface
         if (count($this->bcc)) {
             $this->setHeader(
                 'BCC',
-                implode(',', array_map(function ($v) {
+                implode(',' . "\r\n\t", array_map(function ($v) {
                     return $v['string'];
                 }, $this->bcc))
             );
@@ -527,7 +539,7 @@ class Mail implements MailInterface
     public function setSubject($subject)
     {
         $this->subject = static::rfc1342decode($subject);
-        $this->setHeader('Subject', '=?utf-8?B?'.base64_encode((string) $this->subject).'?=');
+        $this->setHeader('Subject', static::rfc1342encode($subject));
         return $this;
     }
     /**
@@ -799,10 +811,10 @@ class Mail implements MailInterface
                 $content = chunk_split(base64_encode($content));
                 $message .= '--'.$bnd."\r\n";
                 $message .= 'Content-Type: application/octet-stream;'."\r\n\t".'name="';
-                $message .= '=?utf-8?B?'.base64_encode($file[1]).'?=';
+                $message .= static::rfc1342encode($file[1]);
                 $message .= '"'."\r\n";
                 $message .= 'Content-Disposition: attachment; size='.$size.';'."\r\n\t".'filename="';
-                $message .= '=?utf-8?B?'.base64_encode($file[1]).'?=';
+                $message .= static::rfc1342encode($file[1]);
                 $message .= '"'."\r\n";
                 $message .= 'Content-Transfer-Encoding: base64'."\r\n\r\n";
                 $message .= $content."\r\n\r\n";

@@ -29,6 +29,10 @@ class StorageTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($mail->setFrom('Name Family <test@asdf.com>')->getFrom(true), 'test@asdf.com');
 		$this->assertEquals($mail->setFrom('Name Family <test@asdf.com>')->getFrom(false), "Name Family <test@asdf.com>");
 		$this->assertEquals($mail->setFrom('Name Family <test@asdf.com>')->getHeader('From'), "=?utf-8?B?TmFtZSBGYW1pbHk=?= <test@asdf.com>");
+		$this->assertEquals($mail->setFrom('Name With a very long long Family so that it has to break into multiple header lines <test@asdf.com>')
+			->getHeader('From'), "=?utf-8?B?TmFtZSBXaXRoIGEgdmVyeSBsb25nIGxvbmcgRmFtaWx5IHNvIHRoYXQgaXQgaGFzIHQ=?=\r\n\t=?utf-8?B?byBicmVhayBpbnRvIG11bHRpcGxlIGhlYWRlciBsaW5lcw==?= <test@asdf.com>");
+		$this->assertEquals($mail->setFrom('Name With a very long long Family so that it has to break into multiple header lines <test@asdf.com>')->getFrom(false), "Name With a very long long Family so that it has to break into multiple header lines <test@asdf.com>");
+		$this->assertEquals(\vakata\mail\Mail::rfc1342decode("=?utf-8?B?TmFtZSBXaXRoIGEgdmVyeSBsb25nIGxvbmcgRmFtaWx5IHNvIHRoYXQgaXQgaGFzIHQ=?=\r\n\t=?utf-8?B?byBicmVhayBpbnRvIG11bHRpcGxlIGhlYWRlciBsaW5lcw==?="), 'Name With a very long long Family so that it has to break into multiple header lines');
 	}
 	public function testSubject() {
 		$mail = new \vakata\mail\Mail();
