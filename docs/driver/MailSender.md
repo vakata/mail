@@ -1,31 +1,43 @@
-# vakata\mail\driver\MailSender
+# vakata\mail\driver\MailSender  
+
 A mail sender class that sends message using the built-in PHP mail() function.
+
+## Implements:
+vakata\mail\driver\SenderInterface
+
+
 
 ## Methods
 
 | Name | Description |
 |------|-------------|
-|[send](#vakata\mail\driver\mailsendersend)|Send a message.|
-
----
+|[send](#mailsendersend)|Send a message.|
 
 
 
-### vakata\mail\driver\MailSender::send
-Send a message.  
 
+### MailSender::send  
+
+**Description**
 
 ```php
-public function send (  
-    \vakata\mail\MailInterface $mail  
-) : array    
+public send (\vakata\mail\MailInterface $mail)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mail` | `\vakata\mail\MailInterface` | the message to be sent |
-|  |  |  |
-| `return` | `array` | array with two keys - 'good' and 'bad' - indicating successfull and failed addresses |
+Send a message. 
 
----
+ 
+
+**Parameters**
+
+* `(\vakata\mail\MailInterface) $mail`
+: the message to be sent  
+
+**Return Values**
+
+`array`
+
+> array with two keys - 'good' and 'fail' - indicating successfull and failed addresses  
+
+
 

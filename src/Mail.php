@@ -16,6 +16,7 @@ class Mail implements MailInterface
     protected $message = null;
     protected $headers = [];
     protected $attached = [];
+    protected $related = [];
     protected $crt = null;
     protected $key = null;
     protected $pass = null;
@@ -200,38 +201,33 @@ class Mail implements MailInterface
     }
     protected function processPart(&$part, $mode = 'main')
     {
-        switch ($part['type']) {
-            case 'text/plain':
-                if (!$this->message) {
-                    $this->setMessage($part['body'], false);
+        if ((!$this->message || in_array($mode, ['alternative', 'main'])) &&
+            in_array($part['type'], ['text/plain', 'text/html']) &&
+            is_string($part['body'])
+        ) {
+            $this->setMessage($part['body'], $part['type'] === 'text/html');
+        } else {
+            if (is_array($part['body'])) {
+                foreach ($part['body'] as $item) {
+                    $this->processPart($item, $part['type']);
                 }
-                break;
-            case 'text/html':
-                $this->setMessage($part['body'], true);
-                break;
-            default:
-                if (is_array($part['body'])) {
-                    foreach ($part['body'] as $item) {
-                        $this->processPart($item, $part['type']);
+            } else {
+                if ($mode === 'mixed') {
+                    $name = 'attachment';
+                    if (isset($part['head']['Content-Type']) && strpos($part['head']['Content-Type'], 'name=')) {
+                        $name = static::rfc1342decode(trim(explode('name=', $part['head']['Content-Type'], 2)[1], '"'));
                     }
-                } else {
-                    if ($mode === 'mixed') {
-                        $name = 'attachment';
-                        if (isset($part['head']['Content-Type']) && strpos($part['head']['Content-Type'], 'name=')) {
-                            $name = static::rfc1342decode(trim(explode('name=', $part['head']['Content-Type'], 2)[1], '"'));
-                        }
-                        $this->addAttachment($part['body'], $name);
-                    }
-                    // depends that the root object is the first one: https://tools.ietf.org/html/rfc2387
-                    if ($mode === 'related' && $this->isHTML() && isset($part['head']['Content-Id'])) {
-                        $body = $this->getMessage();
-                        $relid = trim($part['head']['Content-Id'], '<>');
-                        $related = 'data:' . $part['type'] . ';base64,' . base64_encode($part['body']);
-                        $body = str_replace('cid:' . $relid, $related, $body);
-                        $this->setMessage($body, true);
-                    }
+                    $this->addAttachment($part['body'], $name);
                 }
-                break;
+                // depends that the root object is the first one: https://tools.ietf.org/html/rfc2387
+                if ($mode === 'related' && $this->isHTML() && isset($part['head']['Content-Id'])) {
+                    $body = $this->getMessage();
+                    $relid = trim($part['head']['Content-Id'], '<>');
+                    $related = 'data:' . $part['type'] . ';base64,' . base64_encode($part['body']);
+                    $body = str_replace('cid:' . $relid, $related, $body);
+                    $this->setMessage($body, true, true);
+                }
+            }
         }
     }
     /**
@@ -554,11 +550,46 @@ class Mail implements MailInterface
      * Set the message body.
      * @param  string     $message the new message body
      * @param  boolean    $isHTML  is the body HTML formatted (or plain text), defaults to true.
+     * @param  boolean    $related should related items be extracted
      */
-    public function setMessage($message, $isHTML = true)
+    public function setMessage($message, $isHTML = true, $related = false)
     {
         $this->message = $message;
         $this->html = $isHTML;
+        if ($isHTML && $related) {
+            if (strpos($message, '<img ') !== false) {
+                $images = [];
+                preg_replace_callback(
+                    [
+                        '(\<img(.*?)src\s*=\s*"([^"]+)")is',
+                        '(\<img(.*?)src\s*=\s*\'([^\']+)\')is',
+                        '(\<img(.*?)src=([^\'" ]+))is'
+                    ],
+                    function ($matches) use (&$images) {
+                        $images[] = $matches[2];
+                        return '';
+                    },
+                    $message
+                );
+                foreach ($images as $k => $image) {
+                    if (substr($image, 0, 5) === 'data:') {
+                        list($mime, $content) = explode(';', substr($image, 5), 2);
+                        $mime = explode('/', $mime);
+                        if ($mime[0] !== 'image' || substr($content, 0, 6) !== 'base64') {
+                            unset($images[$k]);
+                            continue;
+                        }
+                        $images[$k] = [ base64_decode(substr($content, 6)), 'image.' . $mime[1] ];
+                    } else {
+                        $images[$k] = [ file_get_contents($image), basename($image) ];
+                    }
+                    if (!$mime) {
+                        continue;
+                    }
+                }
+                $this->related = $images;
+            }
+        }
 
         return $this;
     }
@@ -661,6 +692,14 @@ class Mail implements MailInterface
     public function getAttachments()
     {
         return $this->attached;
+    }
+    /**
+     * Retieve a list of all related.
+     * @return array         all attached documents
+     */
+    public function getRelated()
+    {
+        return $this->related;
     }
     /**
      * Remove all attachments.

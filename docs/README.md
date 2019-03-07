@@ -1,6 +1,6 @@
 # vakata\mail
 
-* [vakata\mail\Mail](Mail.md) 
-* [vakata\mail\driver\FileSender](driver/FileSender.md) 
-* [vakata\mail\driver\MailSender](driver/MailSender.md) 
-* [vakata\mail\driver\SMTPSender](driver/SMTPSender.md) 
+* [Mail](Mail.md) 
+* [driver\FileSender](driver/FileSender.md) 
+* [driver\MailSender](driver/MailSender.md) 
+* [driver\SMTPSender](driver/SMTPSender.md) 

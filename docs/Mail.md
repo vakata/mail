@@ -1,552 +1,826 @@
-# vakata\mail\Mail
+# vakata\mail\Mail  
+
 A class representing an e-mail message (headers, body, etc).
+
+## Implements:
+vakata\mail\MailInterface
+
+
 
 ## Methods
 
 | Name | Description |
 |------|-------------|
-|[__construct](#vakata\mail\mail__construct)|Create an instance. Optionally supply initial values for from / subject and the email body.|
-|[htmlToText](#vakata\mail\mailhtmltotext)|A static helper function to convert HTML to text.|
-|[fromString](#vakata\mail\mailfromstring)|Create an instance from a stringified mail.|
-|[getTo](#vakata\mail\mailgetto)|Retrieve the recipients.|
-|[setTo](#vakata\mail\mailsetto)|Set the recipients.|
-|[getCc](#vakata\mail\mailgetcc)|Retrieve the carbon copy recipients.|
-|[setCc](#vakata\mail\mailsetcc)|Set the carbon copy recipients.|
-|[getBcc](#vakata\mail\mailgetbcc)|Retrieve the blind carbon copy recipients.|
-|[setBcc](#vakata\mail\mailsetbcc)|Set the blind carbon copy recipients.|
-|[getFrom](#vakata\mail\mailgetfrom)|Get the sender.|
-|[setFrom](#vakata\mail\mailsetfrom)|Set the sender.|
-|[getSubject](#vakata\mail\mailgetsubject)|Get the message subject.|
-|[setSubject](#vakata\mail\mailsetsubject)|Set the message subject (and also set the appropriate headers).|
-|[getMessage](#vakata\mail\mailgetmessage)|Get the message body.|
-|[setMessage](#vakata\mail\mailsetmessage)|Set the message body.|
-|[isHTML](#vakata\mail\mailishtml)|Is the message HTML formatted.|
-|[getHeaders](#vakata\mail\mailgetheaders)|Retrieve all set headers.|
-|[setHeader](#vakata\mail\mailsetheader)|Add a header to the message.|
-|[hasHeader](#vakata\mail\mailhasheader)|Is a specific header set on the message.|
-|[getHeader](#vakata\mail\mailgetheader)|Retieve a header value by name.|
-|[removeHeader](#vakata\mail\mailremoveheader)|Remove a header from the message by name.|
-|[removeHeaders](#vakata\mail\mailremoveheaders)|Remove all headers from the message.|
-|[hasAttachments](#vakata\mail\mailhasattachments)|Does the message have attachments.|
-|[addAttachment](#vakata\mail\mailaddattachment)|Add an attachment to the message.|
-|[getAttachments](#vakata\mail\mailgetattachments)|Retieve a list of all attachments.|
-|[removeAttachments](#vakata\mail\mailremoveattachments)|Remove all attachments.|
-|[sign](#vakata\mail\mailsign)|Prepare the message for signing.|
-|[__toString](#vakata\mail\mail__tostring)|Get the ready message as a string (headers and body)|
-
----
-
-
-
-### vakata\mail\Mail::__construct
-Create an instance. Optionally supply initial values for from / subject and the email body.  
+|[__construct](#mail__construct)|Create an instance. Optionally supply initial values for from / subject and the email body.|
+|[__toString](#mail__tostring)|Get the ready message as a string (headers and body)|
+|[addAttachment](#mailaddattachment)|Add an attachment to the message.|
+|[fromString](#mailfromstring)|Create an instance from a stringified mail.|
+|[getAttachments](#mailgetattachments)|Retieve a list of all attachments.|
+|[getBcc](#mailgetbcc)|Retrieve the blind carbon copy recipients.|
+|[getCc](#mailgetcc)|Retrieve the carbon copy recipients.|
+|[getFrom](#mailgetfrom)|Get the sender.|
+|[getHeader](#mailgetheader)|Retieve a header value by name.|
+|[getHeaders](#mailgetheaders)|Retrieve all set headers.|
+|[getMessage](#mailgetmessage)|Get the message body.|
+|[getRelated](#mailgetrelated)|Retieve a list of all related.|
+|[getSubject](#mailgetsubject)|Get the message subject.|
+|[getTo](#mailgetto)|Retrieve the recipients.|
+|[hasAttachments](#mailhasattachments)|Does the message have attachments.|
+|[hasHeader](#mailhasheader)|Is a specific header set on the message.|
+|[htmlToText](#mailhtmltotext)|A static helper function to convert HTML to text.|
+|[isHTML](#mailishtml)|Is the message HTML formatted.|
+|[removeAttachments](#mailremoveattachments)|Remove all attachments.|
+|[removeHeader](#mailremoveheader)|Remove a header from the message by name.|
+|[removeHeaders](#mailremoveheaders)|Remove all headers from the message.|
+|[rfc1342decode](#mailrfc1342decode)||
+|[rfc1342encode](#mailrfc1342encode)||
+|[setBcc](#mailsetbcc)|Set the blind carbon copy recipients.|
+|[setCc](#mailsetcc)|Set the carbon copy recipients.|
+|[setFrom](#mailsetfrom)|Set the sender.|
+|[setHeader](#mailsetheader)|Add a header to the message.|
+|[setMessage](#mailsetmessage)|Set the message body.|
+|[setSubject](#mailsetsubject)|Set the message subject (and also set the appropriate headers).|
+|[setTo](#mailsetto)|Set the recipients.|
+|[sign](#mailsign)|Prepare the message for signing.|
 
 
-```php
-public function __construct (  
-    string $from,  
-    string $subject,  
-    string $message  
-)   
-```
-
-|  | Type | Description |
-|-----|-----|-----|
-| `$from` | `string` | the from field, can be either an email or First Last <email@addesss.com> |
-| `$subject` | `string` | the email subject |
-| `$message` | `string` | the message body |
-
----
 
 
-### vakata\mail\Mail::htmlToText
-A static helper function to convert HTML to text.  
+### Mail::__construct  
 
+**Description**
 
 ```php
-public static function htmlToText (  
-    string $html  
-) : string    
+public __construct (string $from, string $subject, string $message)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$html` | `string` | the HTML to convert |
-|  |  |  |
-| `return` | `string` | the plain text data from the HTML string |
+Create an instance. Optionally supply initial values for from / subject and the email body. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $from`
+: the from field, can be either an email or First Last <email@addesss.com>  
+* `(string) $subject`
+: the email subject  
+* `(string) $message`
+: the message body  
+
+**Return Values**
 
 
-### vakata\mail\Mail::fromString
-Create an instance from a stringified mail.  
 
+
+### Mail::__toString  
+
+**Description**
 
 ```php
-public static function fromString (  
-    string $str  
-) : \vakata\mail\Mail    
+public __toString (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$str` | `string` | the mail string |
-|  |  |  |
-| `return` | [`\vakata\mail\Mail`](Mail.md) | the mail instance |
+Get the ready message as a string (headers and body) 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`string`
+
+> the whole message  
 
 
-### vakata\mail\Mail::getTo
-Retrieve the recipients.  
 
+
+### Mail::addAttachment  
+
+**Description**
 
 ```php
-public function getTo (  
-    boolean $mailOnly  
-) : array    
+public addAttachment (string $content, string $name)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mailOnly` | `boolean` | should only email addresses be included (instead of Name <address>), defaults to false |
-|  |  |  |
-| `return` | `array` | array of to addresses |
+Add an attachment to the message. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $content`
+: the contents of the attachment  
+* `(string) $name`
+: the file name for the attachment  
+
+**Return Values**
+
+`self`
 
 
-### vakata\mail\Mail::setTo
-Set the recipients.  
 
+
+
+### Mail::fromString  
+
+**Description**
 
 ```php
-public function setTo (  
-    string|array $mail  
-) : self    
+public static fromString (string $str)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mail` | `string`, `array` | the new recipients |
-|  |  |  |
-| `return` | `self` |  |
+Create an instance from a stringified mail. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $str`
+: the mail string  
+
+**Return Values**
+
+`\vakata\mail\Mail`
+
+> the mail instance  
 
 
-### vakata\mail\Mail::getCc
-Retrieve the carbon copy recipients.  
 
+
+### Mail::getAttachments  
+
+**Description**
 
 ```php
-public function getCc (  
-    boolean $mailOnly  
-) : array    
+public getAttachments (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mailOnly` | `boolean` | should only email addresses be included (instead of Name <address>), defaults to false |
-|  |  |  |
-| `return` | `array` | array of to addresses |
+Retieve a list of all attachments. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`array`
+
+> all attached documents  
 
 
-### vakata\mail\Mail::setCc
-Set the carbon copy recipients.  
 
+
+### Mail::getBcc  
+
+**Description**
 
 ```php
-public function setCc (  
-    string|array $mail  
-) : self    
+public getBcc (boolean $mailOnly)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mail` | `string`, `array` | the new recipients |
-|  |  |  |
-| `return` | `self` |  |
+Retrieve the blind carbon copy recipients. 
 
----
+ 
+
+**Parameters**
+
+* `(boolean) $mailOnly`
+: should only email addresses be included (instead of Name <address>), defaults to false  
+
+**Return Values**
+
+`array`
+
+> array of to addresses  
 
 
-### vakata\mail\Mail::getBcc
-Retrieve the blind carbon copy recipients.  
 
+
+### Mail::getCc  
+
+**Description**
 
 ```php
-public function getBcc (  
-    boolean $mailOnly  
-) : array    
+public getCc (boolean $mailOnly)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mailOnly` | `boolean` | should only email addresses be included (instead of Name <address>), defaults to false |
-|  |  |  |
-| `return` | `array` | array of to addresses |
+Retrieve the carbon copy recipients. 
 
----
+ 
+
+**Parameters**
+
+* `(boolean) $mailOnly`
+: should only email addresses be included (instead of Name <address>), defaults to false  
+
+**Return Values**
+
+`array`
+
+> array of to addresses  
 
 
-### vakata\mail\Mail::setBcc
-Set the blind carbon copy recipients.  
 
+
+### Mail::getFrom  
+
+**Description**
 
 ```php
-public function setBcc (  
-    string|array $mail  
-) : self    
+public getFrom (boolean $mailOnly)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mail` | `string`, `array` | the new recipients |
-|  |  |  |
-| `return` | `self` |  |
+Get the sender. 
 
----
+ 
+
+**Parameters**
+
+* `(boolean) $mailOnly`
+: should only an email address be included (instead of Name <address>), defaults to false  
+
+**Return Values**
+
+`string`
+
+> the sender data  
 
 
-### vakata\mail\Mail::getFrom
-Get the sender.  
 
+
+### Mail::getHeader  
+
+**Description**
 
 ```php
-public function getFrom (  
-    boolean $mailOnly  
-) : string    
+public getHeader (string $header)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mailOnly` | `boolean` | should only an email address be included (instead of Name <address>), defaults to false |
-|  |  |  |
-| `return` | `string` | the sender data |
+Retieve a header value by name. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $header`
+: the header name  
+
+**Return Values**
+
+`string`
+
+> the header value  
 
 
-### vakata\mail\Mail::setFrom
-Set the sender.  
 
+
+### Mail::getHeaders  
+
+**Description**
 
 ```php
-public function setFrom (  
-    string $mail  
-) : self    
+public getHeaders (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$mail` | `string` | the new sender |
-|  |  |  |
-| `return` | `self` |  |
+Retrieve all set headers. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`array`
+
+> all headers of the message  
 
 
-### vakata\mail\Mail::getSubject
-Get the message subject.  
 
+
+### Mail::getMessage  
+
+**Description**
 
 ```php
-public function getSubject () : string    
+public getMessage (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-|  |  |  |
-| `return` | `string` | the message subject |
+Get the message body. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`string`
+
+> the message body  
 
 
-### vakata\mail\Mail::setSubject
-Set the message subject (and also set the appropriate headers).  
 
+
+### Mail::getRelated  
+
+**Description**
 
 ```php
-public function setSubject (  
-    self   
-)   
+public getRelated (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `` | `self` |  |
+Retieve a list of all related. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`array`
+
+> all attached documents  
 
 
-### vakata\mail\Mail::getMessage
-Get the message body.  
 
+
+### Mail::getSubject  
+
+**Description**
 
 ```php
-public function getMessage () : string    
+public getSubject (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-|  |  |  |
-| `return` | `string` | the message body |
+Get the message subject. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`string`
+
+> the message subject  
 
 
-### vakata\mail\Mail::setMessage
-Set the message body.  
 
+
+### Mail::getTo  
+
+**Description**
 
 ```php
-public function setMessage (  
-    string $message,  
-    boolean $isHTML  
-)   
+public getTo (boolean $mailOnly)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$message` | `string` | the new message body |
-| `$isHTML` | `boolean` | is the body HTML formatted (or plain text), defaults to true. |
+Retrieve the recipients. 
 
----
+ 
+
+**Parameters**
+
+* `(boolean) $mailOnly`
+: should only email addresses be included (instead of Name <address>), defaults to false  
+
+**Return Values**
+
+`array`
+
+> array of to addresses  
 
 
-### vakata\mail\Mail::isHTML
-Is the message HTML formatted.  
 
+
+### Mail::hasAttachments  
+
+**Description**
 
 ```php
-public function isHTML () : boolean    
+public hasAttachments (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-|  |  |  |
-| `return` | `boolean` |  |
+Does the message have attachments. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`int`
+
+> the attachments count  
 
 
-### vakata\mail\Mail::getHeaders
-Retrieve all set headers.  
 
+
+### Mail::hasHeader  
+
+**Description**
 
 ```php
-public function getHeaders () : array    
+public hasHeader (string $header)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-|  |  |  |
-| `return` | `array` | all headers of the message |
+Is a specific header set on the message. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $header`
+: the header name  
+
+**Return Values**
+
+`boolean`
 
 
-### vakata\mail\Mail::setHeader
-Add a header to the message.  
 
+
+
+### Mail::htmlToText  
+
+**Description**
 
 ```php
-public function setHeader (  
-    string $header,  
-    string $value  
-) : self    
+public static htmlToText (string $html)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$header` | `string` | the header name |
-| `$value` | `string` | the header value |
-|  |  |  |
-| `return` | `self` |  |
+A static helper function to convert HTML to text. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $html`
+: the HTML to convert  
+
+**Return Values**
+
+`string`
+
+> the plain text data from the HTML string  
 
 
-### vakata\mail\Mail::hasHeader
-Is a specific header set on the message.  
 
+
+### Mail::isHTML  
+
+**Description**
 
 ```php
-public function hasHeader (  
-    string $header  
-) : boolean    
+public isHTML (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$header` | `string` | the header name |
-|  |  |  |
-| `return` | `boolean` |  |
+Is the message HTML formatted. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`boolean`
 
 
-### vakata\mail\Mail::getHeader
-Retieve a header value by name.  
 
+
+
+### Mail::removeAttachments  
+
+**Description**
 
 ```php
-public function getHeader (  
-    string $header  
-) : string    
+public removeAttachments (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$header` | `string` | the header name |
-|  |  |  |
-| `return` | `string` | the header value |
+Remove all attachments. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`self`
 
 
-### vakata\mail\Mail::removeHeader
-Remove a header from the message by name.  
 
+
+
+### Mail::removeHeader  
+
+**Description**
 
 ```php
-public function removeHeader (  
-    string $header  
-) : self    
+public removeHeader (string $header)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$header` | `string` | the header name |
-|  |  |  |
-| `return` | `self` |  |
+Remove a header from the message by name. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $header`
+: the header name  
+
+**Return Values**
+
+`self`
 
 
-### vakata\mail\Mail::removeHeaders
-Remove all headers from the message.  
 
+
+
+### Mail::removeHeaders  
+
+**Description**
 
 ```php
-public function removeHeaders () : self    
+public removeHeaders (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-|  |  |  |
-| `return` | `self` |  |
+Remove all headers from the message. 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
+
+`self`
 
 
-### vakata\mail\Mail::hasAttachments
-Does the message have attachments.  
 
+
+
+### Mail::rfc1342decode  
+
+**Description**
 
 ```php
-public function hasAttachments () : int    
+public static rfc1342decode (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-|  |  |  |
-| `return` | `int` | the attachments count |
+ 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
 
 
-### vakata\mail\Mail::addAttachment
-Add an attachment to the message.  
 
+
+### Mail::rfc1342encode  
+
+**Description**
 
 ```php
-public function addAttachment (  
-    string $content,  
-    string $name  
-) : self    
+public static rfc1342encode (void)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$content` | `string` | the contents of the attachment |
-| `$name` | `string` | the file name for the attachment |
-|  |  |  |
-| `return` | `self` |  |
+ 
 
----
+ 
+
+**Parameters**
+
+`This function has no parameters.`
+
+**Return Values**
 
 
-### vakata\mail\Mail::getAttachments
-Retieve a list of all attachments.  
 
+
+### Mail::setBcc  
+
+**Description**
 
 ```php
-public function getAttachments () : array    
+public setBcc (string|array $mail)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-|  |  |  |
-| `return` | `array` | all attached documents |
+Set the blind carbon copy recipients. 
 
----
+ 
+
+**Parameters**
+
+* `(string|array) $mail`
+: the new recipients  
+
+**Return Values**
+
+`self`
 
 
-### vakata\mail\Mail::removeAttachments
-Remove all attachments.  
 
+
+
+### Mail::setCc  
+
+**Description**
 
 ```php
-public function removeAttachments () : self    
+public setCc (string|array $mail)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-|  |  |  |
-| `return` | `self` |  |
+Set the carbon copy recipients. 
 
----
+ 
+
+**Parameters**
+
+* `(string|array) $mail`
+: the new recipients  
+
+**Return Values**
+
+`self`
 
 
-### vakata\mail\Mail::sign
-Prepare the message for signing.  
 
+
+
+### Mail::setFrom  
+
+**Description**
 
 ```php
-public function sign (  
-    string $crt,  
-    string $key,  
-    string $pass,  
-    string $ca  
-) : self    
+public setFrom (string $mail)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
-| `$crt` | `string` | path to the public key |
-| `$key` | `string` | path to the private key |
-| `$pass` | `string` | the private key password (if necessary) |
-| `$ca` | `string` | the CA chain file |
-|  |  |  |
-| `return` | `self` |  |
+Set the sender. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $mail`
+: the new sender  
+
+**Return Values**
+
+`self`
 
 
-### vakata\mail\Mail::__toString
-Get the ready message as a string (headers and body)  
 
+
+
+### Mail::setHeader  
+
+**Description**
 
 ```php
-public function __toString ()   
+public setHeader (string $header, string $value)
 ```
 
-|  | Type | Description |
-|-----|-----|-----|
+Add a header to the message. 
 
----
+ 
+
+**Parameters**
+
+* `(string) $header`
+: the header name  
+* `(string) $value`
+: the header value  
+
+**Return Values**
+
+`self`
+
+
+
+
+
+### Mail::setMessage  
+
+**Description**
+
+```php
+public setMessage (string $message, boolean $isHTML, boolean $related)
+```
+
+Set the message body. 
+
+ 
+
+**Parameters**
+
+* `(string) $message`
+: the new message body  
+* `(boolean) $isHTML`
+: is the body HTML formatted (or plain text), defaults to true.  
+* `(boolean) $related`
+: should related items be extracted  
+
+**Return Values**
+
+
+
+
+### Mail::setSubject  
+
+**Description**
+
+```php
+public setSubject (self )
+```
+
+Set the message subject (and also set the appropriate headers). 
+
+ 
+
+**Parameters**
+
+* `(self) `
+
+**Return Values**
+
+
+
+
+### Mail::setTo  
+
+**Description**
+
+```php
+public setTo (string|array $mail)
+```
+
+Set the recipients. 
+
+ 
+
+**Parameters**
+
+* `(string|array) $mail`
+: the new recipients  
+
+**Return Values**
+
+`self`
+
+
+
+
+
+### Mail::sign  
+
+**Description**
+
+```php
+public sign (string $crt, string $key, string $pass, string $ca)
+```
+
+Prepare the message for signing. 
+
+ 
+
+**Parameters**
+
+* `(string) $crt`
+: path to the public key  
+* `(string) $key`
+: path to the private key  
+* `(string) $pass`
+: the private key password (if necessary)  
+* `(string) $ca`
+: the CA chain file  
+
+**Return Values**
+
+`self`
+
+
+
 
