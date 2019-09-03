@@ -307,13 +307,21 @@ class SMTPSender implements SenderInterface
             if (!isset($connection['user']) || !isset($connection['pass'])) {
                 throw new MailException('No credentials supplied for IMAP server');
             }
-            fwrite($imap, 'a1 LOGIN '.$connection['user'].' '.$connection['pass']."\r\n");
-            if (substr(fgets($imap, 512), 0, 11) !== 'a1 OK LOGIN') {
+            $cnt = 0;
+			if (isset($connection['scheme']) && $connection['scheme'] === 'tls') {
+				fwrite($imap, 'a'.(++$cnt).' STARTTLS' . "\r\n");
+				fgets($imap, 512);
+				if (!stream_socket_enable_crypto($imap, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+					throw new \vakata\mail\MailException('Could not secure connection');
+				}
+			}
+            fwrite($imap, 'a'.(++$cnt).' LOGIN '.$connection['user'].' '.$connection['pass']."\r\n");
+            if (substr(fgets($imap, 512), 0, 11) !== 'a'.($cnt).' OK LOGIN') {
                 throw new MailException('Invalid credentials for IMAP server');
             }
             try {
                 if (is_resource($imap)) {
-                    fwrite($imap, 'a2 LOGOUT');
+                    fwrite($imap, 'a'.(++$cnt).' LOGOUT');
                     @fclose($imap);
                 }
                 $imap = null;
@@ -322,7 +330,7 @@ class SMTPSender implements SenderInterface
         } catch (\Exception $e) {
             try {
                 if (is_resource($imap)) {
-                    fwrite($imap, 'a2 LOGOUT');
+                    fwrite($imap, 'a'.(++$cnt).' LOGOUT');
                     @fclose($imap);
                 }
                 $imap = null;
