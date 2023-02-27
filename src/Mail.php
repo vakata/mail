@@ -535,7 +535,7 @@ class Mail implements MailInterface
     public function setSubject($subject)
     {
         $this->subject = static::rfc1342decode($subject);
-        $this->setHeader('Subject', static::rfc1342encode($subject));
+        $this->setHeader('Subject', static::rfc1342encode($this->subject));
         return $this;
     }
     /**
