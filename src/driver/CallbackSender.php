@@ -9,10 +9,7 @@ use \vakata\mail\MailException;
 class CallbackSender implements SenderInterface
 {
     protected Closure $sender;
-    /**
-     * Create an instance.
-     * @param  string      $dir the path to save all emails to
-     */
+
     public function __construct(callable $sender)
     {
         $this->sender = Closure::fromCallable($sender);

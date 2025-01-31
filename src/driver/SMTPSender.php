@@ -15,7 +15,7 @@ class SMTPSender implements SenderInterface
 
     protected function host()
     {
-        if (isset($_SERVER) && isset($_SERVER['SERVER_NAME']) && !empty($_SERVER['SERVER_NAME'])) {
+        if (isset($_SERVER['SERVER_NAME']) && !empty($_SERVER['SERVER_NAME'])) {
             return $_SERVER['SERVER_NAME'];
         }
         if (function_exists('gethostname')) {
@@ -25,7 +25,7 @@ class SMTPSender implements SenderInterface
             }
         }
         $temp = php_uname('n');
-        if ($temp !== false) {
+        if ($temp) {
             return $temp;
         }
 
@@ -81,18 +81,16 @@ class SMTPSender implements SenderInterface
                 continue;
             }
             $s = explode(' ', $s);
-            if (!empty($s)) {
-                if (!$n) {
-                    $n = 'HELO';
-                    $s = $s[0];
-                } else {
-                    $n = array_shift($s);
-                    if ($n == 'SIZE') {
-                        $s = ($s) ? $s[0] : 0;
-                    }
+            if (!$n) {
+                $n = 'HELO';
+                $s = $s[0];
+            } else {
+                $n = array_shift($s);
+                if ($n == 'SIZE') {
+                    $s = ($s) ? $s[0] : 0;
                 }
-                $smtp[$n] = ($s ? $s : true);
             }
+            $smtp[$n] = ($s ? $s : true);
         }
         return $smtp;
     }
@@ -299,6 +297,7 @@ class SMTPSender implements SenderInterface
             throw new MailException('Could not connect to IMAP server');
         }
 
+        $cnt = 0;
         try {
             stream_set_timeout($imap, 30);
             if (substr(fgets($imap, 512), 0, 4) !== '* OK') {
@@ -307,14 +306,13 @@ class SMTPSender implements SenderInterface
             if (!isset($connection['user']) || !isset($connection['pass'])) {
                 throw new MailException('No credentials supplied for IMAP server');
             }
-            $cnt = 0;
-			if (isset($connection['scheme']) && $connection['scheme'] === 'tls') {
-				fwrite($imap, 'a'.(++$cnt).' STARTTLS' . "\r\n");
-				fgets($imap, 512);
-				if (!stream_socket_enable_crypto($imap, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-					throw new \vakata\mail\MailException('Could not secure connection');
-				}
-			}
+            if (isset($connection['scheme']) && $connection['scheme'] === 'tls') {
+                fwrite($imap, 'a'.(++$cnt).' STARTTLS' . "\r\n");
+                fgets($imap, 512);
+                if (!stream_socket_enable_crypto($imap, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                    throw new \vakata\mail\MailException('Could not secure connection');
+                }
+            }
             fwrite($imap, 'a'.(++$cnt).' LOGIN '.$connection['user'].' '.$connection['pass']."\r\n");
             if (substr(fgets($imap, 512), 0, 11) !== 'a'.($cnt).' OK LOGIN') {
                 throw new MailException('Invalid credentials for IMAP server');
@@ -349,7 +347,7 @@ class SMTPSender implements SenderInterface
         if (!$this->connected()) {
             $this->connect();
         }
-        $this->comm('MAIL FROM:<'.$mail->getFrom(true).'>', [250]);
+        $this->comm('MAIL FROM:<'.$mail->getFrom().'>', [250]);
         $recp = array_merge(
             $mail->getTo(true),
             $mail->getCc(true),

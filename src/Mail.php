@@ -28,7 +28,7 @@ class Mail implements MailInterface
      * @param  string      $subject the email subject
      * @param  string      $message the message body
      */
-    public function __construct($from = null, $subject = null, $message = null)
+    public function __construct(?string $from = null, ?string $subject = null, ?string $message = null)
     {
         if ($from) {
             $this->setFrom($from);
@@ -232,10 +232,10 @@ class Mail implements MailInterface
     }
     /**
      * Create an instance from a stringified mail.
-     * @param  string     $str the mail string
+     * @param  string     $mail the mail string
      * @return \vakata\mail\Mail          the mail instance
      */
-    public static function fromString($mail)
+    public static function fromString(string $mail): self
     {
         $rtrn = new self();
         $mail = $rtrn->parseParts($mail);
@@ -352,7 +352,7 @@ class Mail implements MailInterface
             return implode('', $temp);
         }
         $data = explode('?', substr(trim($data), 2, -2), 3);
-        if (!count($data) === 3 || !in_array(strtoupper($data[1]), ['Q', 'B'])) {
+        if (count($data) !== 3 || !in_array(strtoupper($data[1]), ['Q', 'B'])) {
             return '';
         }
         if (strtoupper($data[1]) === 'B') {
@@ -530,7 +530,7 @@ class Mail implements MailInterface
     }
     /**
      * Set the message subject (and also set the appropriate headers).
-     * @param  self
+     * @return  self
      */
     public function setSubject($subject)
     {
@@ -572,6 +572,7 @@ class Mail implements MailInterface
                     $message
                 );
                 foreach ($images as $k => $image) {
+                    $mime = null;
                     if (substr($image, 0, 5) === 'data:') {
                         list($mime, $content) = explode(';', substr($image, 5), 2);
                         $mime = explode('/', $mime);
@@ -678,7 +679,7 @@ class Mail implements MailInterface
      */
     public function addAttachment($content, $name)
     {
-        if (!is_string($content) || !strlen($content)) {
+        if (!strlen($content)) {
             throw new MailException('Invalid content');
         }
         $this->attached[] = [ &$content, $name ];
