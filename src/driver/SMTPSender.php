@@ -15,6 +15,9 @@ class SMTPSender implements SenderInterface
 
     protected function host()
     {
+        if (isset($this->config['params']['host'])) {
+            return $this->config['params']['host'];
+        }
         if (isset($_SERVER['SERVER_NAME']) && !empty($_SERVER['SERVER_NAME'])) {
             return $_SERVER['SERVER_NAME'];
         }
@@ -113,6 +116,10 @@ class SMTPSender implements SenderInterface
         if (!isset($connection['pass'])) {
             $connection['pass'] = $pass;
         }
+        $connection['params'] = [];
+        if (isset($connection['query']) && strlen($connection['query'])) {
+            parse_str($connection['query'], $connection['params']);
+        }
         $this->config = $connection;
     }
 
@@ -154,10 +161,14 @@ class SMTPSender implements SenderInterface
             $password = isset($connection['pass']) ? $connection['pass'] : '';
             $auth = 'LOGIN';
             if (isset($smtp['AUTH']) && is_array($smtp['AUTH'])) {
-                foreach (['LOGIN', 'CRAM-MD5', 'PLAIN'] as $a) {
-                    if (in_array($a, $smtp['AUTH'])) {
-                        $auth = $a;
-                        break;
+                if (isset($this->config['params']['client_id']) && in_array('XOAUTH2', $smtp['AUTH'])) {
+                    $auth = 'XOAUTH2';
+                } else {
+                    foreach (['LOGIN', 'CRAM-MD5', 'PLAIN'] as $a) {
+                        if (in_array($a, $smtp['AUTH'])) {
+                            $auth = $a;
+                            break;
+                        }
                     }
                 }
             }
@@ -175,6 +186,18 @@ class SMTPSender implements SenderInterface
                     $challenge = $this->comm('AUTH CRAM-MD5', [334]);
                     $challenge = base64_decode($challenge);
                     $this->comm(base64_encode($username.' '.hash_hmac('md5', $challenge, $password)), [235]);
+                    break;
+                case 'XOAUTH2':
+                    $temp = $this->config['params'];
+                    $token = $this->oauth($temp['server'] ?? '', $temp['client_id'] ?? '', $temp['secret'] ?? '', $temp['scope'] ?? '');
+                    $this->comm(
+                        'AUTH XOAUTH2 ' . base64_encode(
+                            'user=' . $username . "\001" .
+                            'auth=Bearer ' . $token . "\001\001"
+                        ),
+                        [235]
+                    );
+                    break;
             }
         }
         return $this;
@@ -347,7 +370,7 @@ class SMTPSender implements SenderInterface
         if (!$this->connected()) {
             $this->connect();
         }
-        $this->comm('MAIL FROM:<'.$mail->getFrom().'>', [250]);
+        $this->comm('MAIL FROM:<'.$mail->getFrom(true).'>', [250]);
         $recp = array_merge(
             $mail->getTo(true),
             $mail->getCc(true),
@@ -379,5 +402,37 @@ class SMTPSender implements SenderInterface
         $this->comm('RSET', [250]);
 
         return [ 'good' => $good, 'fail' => $badr ];
+    }
+
+    protected function oauth(string $url, string $id, string $secret, string $scope = ''): string
+    {
+        $data = http_build_query([
+            'client_id' => $id,
+            'client_secret' => $secret,
+            'grant_type' => 'client_credentials',
+            'scope' => $scope,
+        ]);
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => implode("\r\n", [
+                    'Content-Type: application/x-www-form-urlencoded',
+                    'Content-Length: ' . strlen($data),
+                ]),
+                'content' => $data,
+            ],
+        ]);
+        $response = file_get_contents($url, false, $context);
+        if (!$response) {
+            throw new MailException('Oauth2 Error');
+        }
+        $token = json_decode($response, true);
+        if (!is_array($token)) {
+            throw new MailException('Oauth2 Error');
+        }
+        if (!isset($token['access_token'])) {
+            throw new MailException('Oauth2 Error');
+        }
+        return $token['access_token'];
     }
 }
